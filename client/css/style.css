@@ -1,0 +1,150 @@
+@import './index.css';
+body{
+	user-select: none;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+	-o-user-select: none;
+	padding:0px;
+	margin:0px;
+}
+.game
+{
+	width: 100vw;
+	height: 100vh;
+}
+#youdied{
+	border: 2px solid #000000;
+	border-radius: 8px;
+	background-color: #e5e4e0;
+	opacity: 0.8;
+	position: absolute;
+	width: 40%;
+	z-index: 2;
+	left: 50%;
+	top: 40%;
+	transform: translateX(-50%);
+}
+#youdied svg {
+	width: 60px;
+	height: 60px;
+}
+#youdiedtitle{
+	text-align: center;
+	color: red;
+	font-family: 'Helvetica', Sans-serif;
+	font-size: 3em;
+/*	height: 20%;*/
+	padding-top: 4px;
+	margin-top: 4px;
+	padding-bottom: 4px;
+	margin-bottom: 4px;
+}
+
+#respawntime{
+	text-align: center;
+	color: black;
+	position: relative;
+	font-family: 'Helvetica', Sans-serif;
+	font-size: 1em;
+	padding-bottom: 4px;
+	margin-bottom: 4px;
+	padding-top: 0px;
+	margin-top: 0px;
+}
+
+#hp{
+	background-color: red;
+	opacity: 1;
+	position: absolute;
+	z-index: 3;
+	padding: 0px;
+	margin: 0px;
+	left: 2px;
+	top: 2px;
+}
+
+#hpbg{
+	background-color: #e5e4e0;
+	border: 2px solid black;
+	border-radius: 8px;
+	opacity: 1;
+	position: absolute;
+	z-index: 2;
+}
+
+#gameWindow{
+	z-index: 1;
+}
+
+.inv-slot{
+	background-color: #e5e4e0;
+	border: 2px solid #000000;
+	border-radius: 8px;
+	opacity: 0.6;
+	position: absolute;
+	z-index: 3;
+	max-width: 64px;
+	max-height: 64px;
+}
+
+.inv-slot p {
+	position: absolute;
+	z-index: 5;
+	color: black;
+	padding: 2px;
+	margin: 0px;
+	font-family: 'Helvetica', Sans-serif;
+}
+.inv-icon{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	z-index: 4;
+	padding: 0px;
+	margin: 0px;
+	width: 60px;
+	height: 60px;
+}
+
+.spinner {
+  margin: 0 auto 0;
+  width: 70px;
+  text-align: center;
+}
+
+.spinner > div {
+  width: 18px;
+  height: 18px;
+  background-color: white;
+
+  border-radius: 100%;
+  display: inline-block;
+  -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+  animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+}
+
+.spinner .bounce1 {
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+
+.spinner .bounce2 {
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+
+@-webkit-keyframes sk-bouncedelay {
+  0%, 80%, 100% { -webkit-transform: scale(0) }
+  40% { -webkit-transform: scale(1.0) }
+}
+
+@keyframes sk-bouncedelay {
+  0%, 80%, 100% { 
+    -webkit-transform: scale(0);
+    transform: scale(0);
+  } 40% { 
+    -webkit-transform: scale(1.0);
+    transform: scale(1.0);
+  }
+}
