@@ -38,6 +38,9 @@ let rin =
 		this.EnemyClass = await import('./entities/enemy.js');
 		this.EnemyClass = this.EnemyClass.Enemy;
 
+		this.BonusClass = await import('./entities/bonus.js');
+		this.BonusClass = this.BonusClass.Bonus;
+
 		this.LineDrawer = await import('./entities/linedrawer.js');
 		this.LineDrawer = this.LineDrawer.LineDrawer;
 
@@ -142,7 +145,10 @@ let rin =
 		{
 			this.load.image('player', '/assets/player.png');
 			this.load.image('enemy', '/assets/enemy-common-1.png');
-
+			this.load.image('rifleammo', '/assets/rifleammo.png');
+			this.load.image('shotgunammo', '/assets/shotgunammo.png');
+			this.load.image('sniperammo', '/assets/sniperammo.png');
+			this.load.image('cure', '/assets/cure.png');
 			// TILESET
 			this.load.tilemap('map', '/assets/map/map.csv');
 			this.load.image('tiles', '/assets/map/map-tileset.png');
@@ -169,6 +175,7 @@ let rin =
 
 			rin.PlayerClass.group = this.game.add.group();
 			rin.EnemyClass.group  = this.game.add.group();
+			rin.BonusClass.group  = this.game.add.group();
 			rin.LineDrawer.group  = this.game.add.group();
 
 			rin.winManager.createUI();
@@ -219,14 +226,17 @@ let rin =
 				this.ins.on('playerDisconnect', rin.PlayerClass.removePlayer);
 				this.ins.on('onInitialJoinPopulatePlayers', rin.PlayerClass.onInitialJoinPopulatePlayers);
 				this.ins.on('onInitialJoinPopulateEnemies', rin.EnemyClass.onInitialJoinPopulateEnemies);
+				this.ins.on('onInitialJoinPopulateBonus', rin.BonusClass.onInitialJoinPopulateBonus);
+				
 
 				this.ins.on('updateClientOnPlayers', rin.PlayerClass.updateAll);
 				this.ins.on('updateClientOnEnemies', rin.EnemyClass.updateAll);
 				this.ins.on('createEnemy', rin.EnemyClass.createEnemy);
 				this.ins.on('removeEnemy', rin.EnemyClass.removeEnemy);
 
-				// 
 				this.ins.on('createGunShot', rin.GunHandler.createGunShot);
+				this.ins.on('createBonus', rin.BonusClass.createBonus);
+				this.ins.on('destroyBonus', rin.BonusClass.destroyBonus);
 
 				rin.game.ins.camera.follow(rin.game.currentPlayer.gameObj, Phaser.Camera.FOLLOW_TOPDOWN, 0.1, 0.1);
 				rin.game.ins.time.events.loop(100, rin.socket.updateServer, this);

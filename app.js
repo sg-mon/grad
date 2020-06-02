@@ -4,8 +4,8 @@ let Player    = require('./server/player.js');
 let Enemy     = require('./server/enemy.js');
 let world     = require('./server/handlers/world.js');
 let collision = require('./server/handlers/collision.js');
-// let Block = require('./server/block.js');
-// let GroundItem = require('./server/grounditem.js');
+let Bonus     = require('./server/bonus.js');
+// let Block     = require('./server/block.js');
 
 let SOCKET_LIST = socket.SOCKET_LIST;
 let playersLength = 0;
@@ -23,9 +23,9 @@ setInterval(function ()
 		Player.onConnect(lastConnectedSocket);
 		playersLength++;
 		Enemy.onPlayerConnect(lastConnectedSocket);
+		Bonus.onPlayerConnect(lastConnectedSocket);
 		// Block.onPlayerConnect(socket);
-		// GroundItem.onPlayerConnect(socket);
-		lastConnectedSocket.on('disconnect', function ()
+		lastConnectedSocket.on('disconnect', function (sock)
 		{
 			lastConnectedSocket.broadcast.emit('playerDisconnect', lastConnectedSocket.id);
 			Player.onDisconnect(lastConnectedSocket);
@@ -53,11 +53,11 @@ setInterval(function ()
 
 	world.step(delta/1000);
 
-
 	collision.update();
+	Bonus.randomSpawn();
+
 	if(!enemiesAlive)
 	{
-		// GroundItem.randomlySpawnAmmo();
 		Enemy.createWave();
 	}
 }, 1000/60);
@@ -65,18 +65,19 @@ setInterval(function ()
 //Update clients loop
 setInterval(function ()
 {
-	for(let i in SOCKET_LIST)
-	{
-		try
+	if (Object.keys(SOCKET_LIST).length)
+		for(let i in SOCKET_LIST)
 		{
-			SOCKET_LIST[i].emit('updateClientOnPlayers', Player.generateCurrentStatusPackage());
-			SOCKET_LIST[i].emit('updateClientOnEnemies', Enemy.generateCurrentStatusPackage());
+			try
+			{
+				SOCKET_LIST[i].emit('updateClientOnPlayers', Player.generateCurrentStatusPackage());
+				SOCKET_LIST[i].emit('updateClientOnEnemies', Enemy.generateCurrentStatusPackage());
+			}
+			catch(error)
+			{
+			  console.log(error, i);
+			}
 		}
-		catch(error)
-		{
-		  console.log(error, i);
-		}
-	}
 }, 1000/40);
 
 

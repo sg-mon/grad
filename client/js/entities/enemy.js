@@ -1,7 +1,7 @@
 export class Enemy
 {
-	static wave = {};
-	static group   = null;
+	static wave  = {};
+	static group = null;
 	static createEnemy(data)
 	{
 		new Enemy(data.id, data.position);

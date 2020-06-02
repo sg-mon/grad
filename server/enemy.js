@@ -138,9 +138,15 @@ class Enemy
 
 		for (let playerId in playerList)
 		{
-			if (!~currentTarget.distance ||
-				rMath.distanceTo(this.playerList[playerId].body.position, playerList[playerId].body.position) < currentTarget.distance)
-			currentTarget = {position: playerList[playerId].body.position, id: playerList[playerId].id, distance: rMath.distanceTo(this.body.position, playerList[playerId].body.position)};
+			if ((!~currentTarget.distance ||
+				rMath.distanceTo(playerList[playerId].body.position, playerList[playerId].body.position) < currentTarget.distance)
+				&& !playerList[playerId].dead)
+			currentTarget =
+			{
+				position: playerList[playerId].body.position,
+				id: playerList[playerId].id,
+				distance: rMath.distanceTo(this.body.position, playerList[playerId].body.position)
+			};
 		}
 
 		this.target = currentTarget.id;

@@ -3,6 +3,7 @@ let world     = require('./world.js');
 let constants = require('../constants.js');
 let Player    = require('../player.js');
 let Enemy     = require('../enemy.js');
+let Bonus     = require('../bonus.js');
 // let Block = require('../block.js');
 
 function orStatementHelper(bodyA, bodyB, value)
@@ -120,7 +121,58 @@ let CollisionHandler =
 {
 	update()
 	{
+		CollisionHandler.updateBonuses();
+	},
+	checkOverlap(p1, p2, s1, s2)
+	{
+		if(p1[0] + s1[0] < p2[0] - s2[0])
+			return false;
+		if(p1[0] - s1[0] > p2[0] + s2[0])
+			return false;
 
+		if(p1[1] + s1[1] < p2[1] - s2[1])
+			return false;
+
+		if(p1[1] - s1[1] > p2[1] + s2[1])
+			return false;
+
+		return true;
+	},
+	updateBonuses()
+	{
+		for(let i in Bonus.list)
+		{
+			let item     = Bonus.list[i],
+				itempos  = item.position,
+				itemsize = [constants.BONUSSIZE, constants.BONUSSIZE];
+
+			for(let j in Player.list)
+			{
+				let player     = Player.list[j],
+					playerpos  = player.body.position,
+					playersize = [constants.PLAYERSIZE, constants.PLAYERSIZE];
+
+				if(CollisionHandler.checkOverlap(playerpos, itempos, playersize, itemsize))
+				{
+					try
+					{
+						if(item.type === 'rifleammo')
+							player.inventory.rifle.ammo   += item.quantity;
+						else if (item.type === 'shotgunammo')
+							player.inventory.shotgun.ammo += item.quantity;
+						else if (item.type === 'sniperammo')
+							player.inventory.sniper.ammo  += item.quantity;
+						else if (item.type === 'cure')
+							player.hp += 20;
+						item.destroy();
+					}
+					catch(error)
+					{
+						console.log(error);
+					}
+				}
+			}
+		}
 	}
 };
 module.exports = CollisionHandler;

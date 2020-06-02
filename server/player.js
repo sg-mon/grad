@@ -54,7 +54,11 @@ class Player
 	static onDisconnect(socket)
 	{
 		console.log("Socket with ID" + socket.id + " disconnected");
-		this.list[socket.id].destroy();
+// console.log(this.list, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n", socket.id, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n", this.list[socket.id]);
+		// if (this.list[socket.id])
+			this.list[socket.id].destroy();
+
+// console.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n", this.list);
 	}
 
 	static update()
@@ -108,7 +112,7 @@ class Player
 			id: id,
 		});
 
-		let bodyShape = new p2.Box({width: 64, height: 64});
+		let bodyShape = new p2.Box({width: constants.PLAYERSIZE, height: constants.PLAYERSIZE});
 		bodyShape.collisionGroup = constants.PLAYER;
 		bodyShape.collisionMask  = constants.ENEMY | constants.BLOCK | constants.PLAYER;
 		this.body.addShape(bodyShape);

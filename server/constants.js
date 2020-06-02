@@ -22,16 +22,16 @@ exports.INVENTORYDATA = {
 		initial: true,
 	}
 };
+exports.PLAYERSIZE  = 64;
 exports.RIFLEDAMAGE = 30;
 exports.RESPAWNTIME = 600;
-
 
 // коллизии
 exports.PLAYER     = Math.pow(2,0);
 exports.ENEMY      = Math.pow(2,1);
 exports.BULLET     = Math.pow(2,2);
 exports.BLOCK      = Math.pow(2,3);
-// exports.GROUNDITEM = Math.pow(2,4);
+exports.BONUS      = Math.pow(2,4);
 
 // карта
 exports.WORLDHEIGHT = 1280;
@@ -83,6 +83,9 @@ exports.ENEMYTYPE =
 	}
 ];
 
+// мир
 exports.ENEMYHITDELAY = 2;
 exports.ENEMYHITRADIUS = 70;
 exports.ENEMYDAMAGE = 20;
+exports.BONUSSIZE = 4;
+exports.MAXBONUSCOUNT = 5;
