@@ -6,47 +6,14 @@ let rMath     = require('./rmath.js');
 
 class Enemy
 {
-	static wave = {};
-	static waveLength = 8;
-	static opposeBodies = new Set([constants.PLAYER, constants.BLOCK]);
-	static createWave()
-	{
-		for (let i = 0; i < this.waveLength; i++)
-		{
-			let enemy = new Enemy();
-			socket.emitAll('createEnemy', {id: enemy.id, position: [enemy.x, enemy.y]});
-		}
-
-		this.waveLength += 4;
-	}
-	static generateCurrentStatusPackage()
-	{
-		let pack = {};
-		for(let i in this.wave)
-			pack[i] =
-			{
-				position: this.wave[i].body.position,
-				angle:    this.wave[i].angle
-			};
-
-		return pack;
-	}
-	static updateAll(playerList)
-	{
-		for (let id in this.wave)
-			this.wave[id].update(playerList);
-	}
-	static onPlayerConnect(newSocket)
-	{
-		newSocket.emit('onInitialJoinPopulateEnemies', this.generateCurrentStatusPackage());
-	}
+	// static opposeBodies = new Set([constants.PLAYER, constants.BLOCK]);
 	static destroy(id)
 	{
 		world.removeBody(this.wave[id].body);
 		delete this.wave[id];
 		socket.emitAll('removeEnemy', id);
 	}
-	constructor(type)
+	constructor()
 	{
 		this.id = 'enemy-' + rMath.rand(100000, 999999);
 
@@ -76,7 +43,6 @@ class Enemy
 		this.body.addShape(enemyshape);
 		world.addBody(this.body);
 
-		Enemy.wave[this.id] = this;
 		this.updateTarget();
 	}
 	initAttack(id)

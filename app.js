@@ -1,94 +1,87 @@
-let p2        = require('p2');
-let socket    = require('./server/socket.js');
-let Player    = require('./server/player.js');
-let Enemy     = require('./server/enemy.js');
-let world     = require('./server/handlers/world.js');
-let collision = require('./server/handlers/collision.js');
-let Bonus     = require('./server/bonus.js');
-// let Block     = require('./server/block.js');
+let socketio    = require('./server/socket.js').io;
+let world       = require('./server/handlers/world.js');
+let $this       = socketio.of('/pve');
+let Room        = require('./server/room.js');
+let rooms       = Room.list;
+let SOCKET_LIST = {};
 
-let SOCKET_LIST = socket.SOCKET_LIST;
-let playersLength = 0;
-let io = socket.io;
-
-let lastConnectedSocket = null;
-
-// Block.initMap();
-setInterval(function ()
-{
-	if(lastConnectedSocket != socket.getLastConnectedSocket())
-	{
-		lastConnectedSocket = socket.getLastConnectedSocket();
-		SOCKET_LIST[lastConnectedSocket.id] = lastConnectedSocket;
-		Player.onConnect(lastConnectedSocket);
-		playersLength++;
-		Enemy.onPlayerConnect(lastConnectedSocket);
-		Bonus.onPlayerConnect(lastConnectedSocket);
-		// Block.onPlayerConnect(socket);
-		lastConnectedSocket.on('disconnect', function (sock)
-		{
-			lastConnectedSocket.broadcast.emit('playerDisconnect', lastConnectedSocket.id);
-			Player.onDisconnect(lastConnectedSocket);
-			playersLength--;
-			delete SOCKET_LIST[lastConnectedSocket.id];
-		});
-	}
-}, 1000/10);
-
-
-
-//Physics loop
 let lastTime = Date.now();
 
-let waveNumber = 1;
-
 setInterval(function ()
 {
-	let enemiesAlive  = Object.keys(Enemy.wave).length,
-		delta = Date.now() - lastTime;
+	let delta = Date.now() - lastTime;
 
 	lastTime = Date.now();
-
-	Player.update();
+	for(let roomId in rooms)
+	{
+		rooms[roomId].updateAll();
+		// rooms[roomId].enemiesUpdate(rooms[roomId].players);
+	}
 
 	world.step(delta/1000);
 
-	collision.update();
-	Bonus.randomSpawn();
+	// collision.update();
+	// Bonus.randomSpawn();
 
-	if(!enemiesAlive)
-	{
-		Enemy.createWave();
-	}
+	// if(!enemiesAlive)
+	// {
+	// 	Enemy.createWave();
+	// }
 }, 1000/60);
-
-//Update clients loop
-setInterval(function ()
-{
-	if (Object.keys(SOCKET_LIST).length)
-		for(let i in SOCKET_LIST)
-		{
-			try
-			{
-				SOCKET_LIST[i].emit('updateClientOnPlayers', Player.generateCurrentStatusPackage());
-				SOCKET_LIST[i].emit('updateClientOnEnemies', Enemy.generateCurrentStatusPackage());
-			}
-			catch(error)
-			{
-			  console.log(error, i);
-			}
-		}
-}, 1000/40);
-
 
 // setInterval(function ()
 // {
-// 	Block.update();
-// }, 5000);
+// 	for (let roomId in rooms)
+// 		for (let playerId in rooms[roomId].players)
+// 			try
+// 			{
+// 				$this.to(roomId).emit('updateClientOnPlayers', rooms[roomId].players.generateCurrentStatusPackage());
+// 			}
+// 			catch(e)
+// 			{
+// 				console.log("pve.js - line 42",e);
+// 			}
 
+// }, 1000/40);
 
-setInterval(()=>
-{
-	if (playersLength)
-		Enemy.updateAll(Player.list);
-}, 200);
+$this
+.on('connect', (socket) => {
+	SOCKET_LIST[socket.id] = socket;
+
+	socket.emit('roomsList', Room.getRoomsList());
+	socket.on('createRoom', (data)=>
+	{
+		let newRoom = new Room("pve", data.title, data.playerCount);
+		socket.emit('newRoom', newRoom);
+	});
+
+	socket.on('joinRoom', (roomToJoin)=>
+	{
+		if (!rooms[roomToJoin])
+		{
+			console.log(`No room with id ${roomToJoin}`);
+			return;
+		}
+		const roomToLeave = Object.keys(socket.rooms)[1];
+		socket.leave(roomToLeave);
+		// updateUsersInRoom(roomToLeave);
+		socket.join(roomToJoin);
+		// updateUsersInRoom(roomToJoin);
+
+		rooms[roomToJoin].addPlayer(socket);
+	});
+	socket.on('disconnect', ()=>
+	{
+		for (let roomId in rooms)
+			rooms[roomId].players.onDisconnect(socket.id);
+	});
+});
+// function updateUsersInRoom(roomToJoin)
+// {
+// 	// Send back the number of users in this room to ALL sockets connected to this room
+// 	$this.in(roomToJoin).clients((error,clients)=>
+// 	{
+// 		// io.of("pve").in(roomToJoin).emit('updateMembers',clients.length);
+// 	})
+// }
+module.exports = $this;

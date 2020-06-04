@@ -2,12 +2,12 @@ let p2        = require('p2');
 let world     = require('./world.js');
 let constants = require('../constants.js');
 let rMath     = require('../rmath.js');
-let socket    = require('../socket.js');
+let socketio  = require('../socket.js').io;
 let Enemy     = require('../enemy.js');
 
 let GunHandler =
 {
-	rifleShoot(angle, position, id)
+	rifleShoot(room, angle, position, id)
 	{
 		let distance = 800;
 		let startx = position[0] + 50*Math.cos(angle/180*Math.PI);
@@ -28,8 +28,7 @@ let GunHandler =
 				killedEnemy = Enemy.wave[result.body.id].decreaseHp(constants.RIFLEDAMAGE, id);
 
 		let length = Math.abs(result.getHitDistance(ray));
-
-		socket.emitAll('createGunShot', {startx: startx, starty: starty, angle: angle, length: length});
+		socketio.of('/pve').to(room).emit('createGunShot', {startx: startx, starty: starty, angle: angle, length: length});
 		return killedEnemy;
 	}
 

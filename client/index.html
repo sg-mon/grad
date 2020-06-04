@@ -8,13 +8,68 @@
 	<link rel="stylesheet" type="text/css" href="client/css/style.css">
 	<link rel="shortcut icon" href="assets/favicon.png" type="image/png">
 	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
-	<script type="text/javascript" src="/client/js/main.min.js"></script>
+	<script defer type="text/javascript" src="/client/js/vendors.min.js"></script>
+	<script defer type="text/javascript" src="/client/js/main.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
-	<title>Green Game 😎</title>
+	<title>Green Game</title>
 </head>
 
 <body ng-controller="MainCtrl">
 	<div class="content _no-game">
+		<div class="_overlay overlay">
+			<!-- <div class="popup play-popup">
+				<div onclick="rin.connect('pve')" class="play-popup-item _pve">
+					<div class="play-popup-item__descr">
+						Командная игра
+					</div>
+				</div>
+				<div onclick="rin.connect('pvp')" class="play-popup-item _pvp">
+					<div class="play-popup-item__descr">
+						Перестрелка
+					</div>
+				</div>
+			</div> -->
+			<div class="popup room-create">
+				<form onsubmit="rin.rooms.createReq(event)" class="room-create-form">
+					<table>
+						<tr>
+							<td>Название</td>
+							<td>
+								<input autofocus type="text" name="title">
+							</td>
+						</tr>
+						<tr>
+							<td>Максимум игроков</td>
+							<td>
+								<select name="playerCount">
+									<option>2</option>
+									<option>4</option>
+									<option>8</option>
+									<option>16</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>Сложность</td>
+							<td>
+								<select name="waveCount">
+									<option>Легко</option>
+									<option>Средняя</option>
+									<option>Тяжелая</option>
+									<option>Кошмар</option>
+								</select>
+							</td>
+						</tr>
+						<tr class="error">
+							<td colspan="2">
+								Заполните все поля!
+							</td>
+						</tr>
+					</table>
+					<button class="btn">Создать!</button>
+				</form>
+			</div>
+		</div>
 		<header class="header">
 			<div class="container">
 				<div class="logo">
@@ -22,12 +77,69 @@
 				</div>
 			</div>
 		</header>
-		<section class="play">
+		<section class="rooms hide">
 			<div class="container">
-				<h2>Данные о текущих играх</h2>
-				<button onclick="rin.initGame()" class="btn">Подключиться к игре</button>
+				<h2>Текущие игры</h2>
+				<div class="room-items">
+					<div class="_room-items-all">
+						<div data-id="" class="room-item _test-room-item">
+							<table class="room-item-table">
+								<tr>
+									<td><b>id</b></td>
+									<td class="_room-id"></td>
+								</tr>
+								<tr>
+									<td><b>Название</b></td>
+									<td class="_room-title"></td>
+								</tr>
+								<tr>
+									<td><b>Игроки</b></td>
+									<td class="_room-players"></td>
+								</tr>
+							</table>
+							<button onclick="rin.rooms.join(event)" class="btn room-item-btn">Присоединиться</button>
+						</div>
+					</div>
+					<p class="room-items-empty">
+						Сейчас на сервере нет активных игр, попробуйте
+					</p>
+					<p class="room-items-btn-wr">
+						<button onclick="rin.popups.open('.room-create')" class="btn room-items-btn btn_big">Создать свою</button>
+					</p>
+				</div>
 			</div>
 		</section>
+		<section class="play">
+			<div class="container">
+				<h1></h1>
+				<section class="play-descr">
+					<h2>Как играть?</h2>
+					<p>
+						<span class="play-title-text">Green Game</span> - это браузерный многопользовательский шутер с двумя режимами: <b>Командная игра</b> и <b>Перестрелка</b>.
+					</p>
+					<p>
+						Цель игры <b>командной игры</b> - пережить атаки зомби в заданном количестве раундов, если все участники раунда одновременно выведены из строя, игра заканчивается с поражением. Если в конце раунда в живых остался хотя бы один игрок, он считается пройденным и прочие участники возвращаются.
+					</p>
+					<p>
+						Цель <b>перестрелки</b> - набрать большее число очков, игра заканчивается, когда количество полученных очков достигла заданного при создании комнаты.
+					</p>
+					<p>
+						<button onclick="rin.connect('pve')" class="btn btn_big play-btn">Подключиться!</button>
+					</p>
+				</section>
+				<!-- <button onclick="rin.initGame()" class="btn btn_big play-btn">Подключиться!</button> -->
+			</div>
+		</section>
+		<footer class="footer-wr">
+			<div class="container footer">
+				<div class="footer-text">
+					© Green Game Group 2020
+				</div>
+				<div class="footer-logo">
+					<img src="/assets/favicon.png">
+				</div>
+			</div>
+		</footer>
 	</div>
 	<div class="game-wr hide">
 		<div class="inner" ng-view></div>
