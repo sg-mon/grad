@@ -30,14 +30,14 @@ export let winManager =
 			invHeight =  Math.min(64, (w * 0.6)/9),
 			invWidth  = invHeight*9 + 5*8;
 
-		for(let i = 1; i <= 9; i++){
-			let slot = '#inv' + i;
-			$(slot).height(invHeight);
-			$(slot).width(invHeight);
-			$(slot).css({left: (window.innerWidth - invWidth)/2 + i*84, bottom: invHeight});
-		}
-		$('.invIcon').height(invHeight-2);
-		$('.invIcon').width(invHeight-2);
+		// for(let i = 1; i <= 9; i++){
+		// 	let slot = '#inv' + i;
+		// 	$(slot).height(invHeight);
+		// 	$(slot).width(invHeight);
+		// 	$(slot).css({left: (window.innerWidth - invWidth)/2 + i*84, bottom: invHeight});
+		// }
+		// $('.invIcon').height(invHeight-2);
+		// $('.invIcon').width(invHeight-2);
 
 		//Health bar
 		this.healthbar.height(invHeight*0.4);

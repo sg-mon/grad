@@ -10,10 +10,12 @@ var gulp             = require('gulp'),
 
 // файлы для сборки
 var jsFiles = [
-	'js/vendors/*.js',
 	'js/main.js'
 ];
 
+var jsFilesVen = [
+	'js/vendors/*.js'
+];
 // таск для объединения js файлов
 gulp.task('scripts', () => {
 	process.env.NODE_ENV = "release";
@@ -24,6 +26,15 @@ gulp.task('scripts', () => {
 		.pipe(browserSync.reload({stream: true}))
 });
 
+// таск для объединения js файлов
+gulp.task('scripts-ven', () => {
+	process.env.NODE_ENV = "release";
+	return gulp.src(jsFilesVen)
+		.pipe(concat('vendors.min.js'))
+		.pipe(uglify())
+		.pipe(gulp.dest('js'))
+		.pipe(browserSync.reload({stream: true}))
+});
 
 // таск для сборки, транспонирования и сжатия скриптов
 gulp.task('scripts-build', () => {
