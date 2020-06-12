@@ -10,6 +10,22 @@ html
 	font-size: 1.6rem;
 	font-family: 'Montserrat', sans-serif;
 }
+.name-popup
+{
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+.rooms,
+.play
+{
+	min-height: calc(100vh - 24rem);
+}
+.rooms
+{
+	padding-top: 6rem;
+	padding-bottom: 8rem;
+}
 body::-webkit-scrollbar
 {
 	width: 0;
@@ -23,6 +39,7 @@ h2
 	color: #333;
 	line-height: 1;
 	font-size: 3rem;
+	margin-top: 0;
 	margin-bottom: 4rem;
 	font-weight: 600;
 	text-align: center;
@@ -39,6 +56,17 @@ button,
 	transition: ease-out .125s;
 	font-weight: 600;
 	outline: none;
+}
+button[disabled]
+{
+	background-color: #bbb;
+	color: #fff;
+}
+button[disabled]:hover
+{
+	background-color: #bbb;
+	color: #fff;
+	cursor: default;
 }
 .btn_big
 {
@@ -130,7 +158,7 @@ body.ow-hidden
 	visibility: hidden;
 	opacity: 0;
 	background-color: #fff;
-	max-width: 130rem;
+	max-width: 55rem;
 	/*max-height: calc(var(--vh, 1vh) * 90);*/
 	padding: 2.4rem;
 	max-height: calc(var(--vh, 1vh) * 75);
@@ -293,10 +321,6 @@ section
 {
 	margin-bottom: 4rem;
 }
-
-.room-items
-{
-}
 ._room-items-all
 {
 	display: -webkit-flex;
@@ -359,7 +383,6 @@ section
 }
 .room-create
 {
-	max-width: 55rem;
 	display: -webkit-flex;
 	display: -moz-flex;
 	display: -ms-flex;

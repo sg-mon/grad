@@ -1,4 +1,4 @@
-export class Player
+class Player
 {
 	static list    = {};
 	static group   = null;
@@ -41,14 +41,14 @@ export class Player
 
 		this.id          = id;
 		this.toDelete    = false;
-		this.x           = 120;
-		this.y           = 120;
+		this.x           = 260;
+		this.y           = 260;
 		this.angle       = 0;
 
 		if (current)
 			this.isCurrent = current;
 
-		this.gameObj = this.constructor.group.create(120, 120, 'player');
+		this.gameObj = this.constructor.group.create(260, 260, 'player');
 		this.gameObj.anchor.x = 0.5;
 		this.gameObj.anchor.y = 0.5;
 		this.gameObj.scale.setTo(1);

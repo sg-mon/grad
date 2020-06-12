@@ -7,15 +7,13 @@ $(document).ready(function()
 
 let rin =
 {
-	slickUI: null,
 	$socket: null,
+	name: '',
 	layer: null,
-	async init()
+	init()
 	{
-		// await this.preload.start();
-		// this.preload.stop();
+		this.popups.open('.statistic-popup');
 		this.$socket = io();
-		await this.impInit();
 	},
 	async initGame()
 	{
@@ -28,35 +26,16 @@ let rin =
 		$('.game-wr').removeClass('hide');
 
 		await this.game.init();
-		this.winManager.init();
+		winManager.init();
 		return Promise.resolve();
 	},
-	async impInit()
+	connect(ns)
 	{
-		this.winManager = await import('./modules/winManager.js');
-		this.winManager = this.winManager.winManager;
-
-		this.PlayerClass = await import('./entities/player.js');
-		this.PlayerClass = this.PlayerClass.Player;
-
-		this.EnemyClass = await import('./entities/enemy.js');
-		this.EnemyClass = this.EnemyClass.Enemy;
-
-		this.BonusClass = await import('./entities/bonus.js');
-		this.BonusClass = this.BonusClass.Bonus;
-
-		this.LineDrawer = await import('./entities/linedrawer.js');
-		this.LineDrawer = this.LineDrawer.LineDrawer;
-
-		return Promise.resolve();
-	},
-	connect(type)
-	{
-		this.$socket = io('/' + type);
+		this.$socket = io('/' + ns);
 		// rooms
 		this.$socket.on('roomsList', rin.rooms.show);
 		this.$socket.on('newRoom', rin.rooms.showNewRoom);
-		this.$socket.on('updateRoom', rin.rooms.updateRoom);
+		this.$socket.on('updateRoom', rin.rooms.update);
 		this.$socket.on('removeRoom', rin.rooms.removeRoom);
 		rin.socket.init();
 	},
@@ -65,18 +44,21 @@ let rin =
 		all: {},
 		show(list)
 		{
-			if (Object.keys(list).length)
-				rin.rooms.showAll(list);
-
 			$('.rooms').removeClass('hide');
 			$('.play').addClass('hide');
-		},
-		showAll(list)
-		{
+
+			if (!Object.keys(list).length)
+				return;
+
 			$('.room-items-empty').addClass('hide');
 
 			for (let id in list)
 				rin.rooms.showNewRoom(list[id]);
+		},
+		update(list)
+		{
+			for (let id in list)
+				rin.rooms.updateRoom(list[id]);
 		},
 		showNewRoom(roomData)
 		{
@@ -91,7 +73,13 @@ let rin =
 			$(roomItem).removeClass('_test-room-item');
 			$(roomItem).find('._room-id').text(roomData.id);
 			$(roomItem).find('._room-title').text(roomData.title);
+			$(roomItem).find('._room-difficulty').text(rin.rooms.getTranslate(roomData.difficulty));
+			$(roomItem).find('._room-location').text(rin.rooms.getTranslate(roomData.location));
+			$(roomItem).attr("data-location", roomData.location);
 			$(roomItem).find('._room-players').text(`${roomData.playerCount}/${roomData.maxPlayerCount}`);
+			if(+roomData.maxPlayerCount === +roomData.playerCount)
+				$(roomItem).find('button').attr('disabled', true);
+
 			$('._room-items-all').append(roomItem);
 			rin.rooms.all[roomData.id] = roomData;
 		},
@@ -100,7 +88,13 @@ let rin =
 			let room = $(`.room-item[data-id=${roomData.id}]`);
 			$(room).find('._room-id').text(roomData.id);
 			$(room).find('._room-title').text(roomData.title);
+			$(room).find('._room-difficulty').text(rin.rooms.getTranslate(roomData.difficulty));
+			$(room).find('._room-location').text(rin.rooms.getTranslate(roomData.location));
+			$(room).attr("data-location", roomData.location);
 			$(room).find('._room-players').text(`${roomData.playerCount}/${roomData.maxPlayerCount}`);
+			if(+roomData.maxPlayerCount === +roomData.playerCount)
+				$(room).find('button').attr('disabled', true);
+
 			rin.rooms.all[roomData.id] = roomData;
 		},
 		removeRoom(id)
@@ -114,6 +108,7 @@ let rin =
 		async join(e)
 		{
 			rin.rooms.currentId = $(e.target).closest('.room-item').data('id');
+			rin.game.location = $(e.target).closest('.room-item').data('location');
 
 			await rin.initGame();
 		},
@@ -136,6 +131,39 @@ let rin =
 
 			rin.$socket.emit('createRoom', data);
 			rin.popups.close('.room-create');
+		},
+		getTranslate(word)
+		{
+			switch(word)
+			{
+				case 'easy':
+					return 'Легко';
+				break;
+				case 'medium':
+					return 'Средняя';
+				break;
+				case 'difficult':
+					return 'Трудная';
+				break;
+				case 'nightmare':
+					return 'Кошмар';
+				break;
+				case 'default':
+					return 'Луг';
+				break;
+				case 'city':
+					return 'Город';
+				break;
+				case 'desert':
+					return 'Пустыня';
+				break;
+				case 'canyon':
+					return 'Каньон';
+				break;
+				default:
+					return '';
+				break;
+			}
 		}
 	},
 	preload:
@@ -177,8 +205,8 @@ let rin =
 					this.inputs.left = true;
 				else if(e.keyCode === 87) //w
 					this.inputs.up = true;
-				// else if (e.keyCode >= 49 && e.keyCode <= 57) //1-9
-					// rin.player.changeInventory(e.keyCode - 48); //Adjusting to 1-5
+				else if (e.keyCode >= 49 && e.keyCode <= 57) //1-9
+					rin.game.changeInventory(e.keyCode - 48); //Adjusting to 1-5
 					// rin.socket.ins.on('changeInventory', e.keyCode - 48);
 
 				rin.socket.updateServer();
@@ -221,6 +249,7 @@ let rin =
 		map:   null,
 		layer: null,
 		start: false,
+		location: 'default',
 		currentPlayer: null,
 		init()
 		{
@@ -236,17 +265,20 @@ let rin =
 		preload()
 		{
 			this.load.image('player', '/assets/player.png');
-			this.load.image('enemy', '/assets/enemy-common-1.png');
+			this.load.image('enemy-common-1', '/assets/enemy-common-1.png');
+			this.load.image('enemy-common-2', '/assets/enemy-common-2.png');
+			this.load.image('enemy-medium-1', '/assets/enemy-medium-1.png');
+			this.load.image('enemy-medium-2', '/assets/enemy-medium-2.png');
 			this.load.image('rifleammo', '/assets/rifleammo.png');
 			this.load.image('shotgunammo', '/assets/shotgunammo.png');
 			this.load.image('sniperammo', '/assets/sniperammo.png');
 			this.load.image('cure', '/assets/cure.png');
 			// TILESET
-			this.load.tilemap('map', '/assets/map/map.csv');
+			this.load.tilemap('map', `/assets/map/map-${rin.game.location}.csv`);
 			this.load.image('tiles', '/assets/map/map-tileset.png');
 			// user interface
-			rin.slickUI = rin.game.ins.plugins.add(Phaser.Plugin.SlickUI);
-			rin.slickUI.load('/assets/UI/kenney.json');
+			winManager.slickUI = rin.game.ins.plugins.add(Phaser.Plugin.SlickUI);
+			winManager.slickUI.load('/assets/UI/kenney.json');
 		},
 		create()
 		{
@@ -265,25 +297,25 @@ let rin =
 			this.game.physics.startSystem(Phaser.Physics.P2JS);
 			this.game.input.mouse.capture = true;
 
-			rin.PlayerClass.group = this.game.add.group();
-			rin.EnemyClass.group  = this.game.add.group();
-			rin.BonusClass.group  = this.game.add.group();
-			rin.LineDrawer.group  = this.game.add.group();
+			Player.group = this.game.add.group();
+			Enemy.group  = this.game.add.group();
+			Bonus.group  = this.game.add.group();
+			LineDrawer.group  = this.game.add.group();
 
 			rin.game.initCurrentPlayer(rin.$socket.id);
 			rin.game.ins.camera.follow(rin.game.currentPlayer.gameObj, Phaser.Camera.FOLLOW_TOPDOWN, 0.1, 0.1);
 			rin.game.ins.time.events.loop(100, rin.socket.updateServer, this);
 			rin.game.start = true;
 
-			rin.$socket.emit('joinRoom', rin.rooms.currentId);
+			rin.$socket.emit('joinRoom', rin.rooms.currentId, rin.name);
 
-			rin.winManager.createUI();
+			winManager.createUI();
 
 			rin.preload.stop();
 		},
 		initCurrentPlayer(id)
 		{
-			this.currentPlayer = new rin.PlayerClass(id, true);
+			this.currentPlayer = new Player(id, true);
 		},
 		currentPlayerUpdate(data)
 		{
@@ -303,13 +335,27 @@ let rin =
 			this.currentPlayer.gameObj.x = this.currentPlayer.x = data.position[0];
 			this.currentPlayer.gameObj.y = this.currentPlayer.y = data.position[1];
 		},
+		changeInventory(slot)
+		{
+			rin.$socket.emit('changeInventory', slot-1);
+		},
+		successChangeInventory(weaponData)
+		{
+			let oldSlot = Object.values(rin.game.currentPlayer.inventory).findIndex(item=>
+			{
+				return item.name === weaponData.oldWeapon
+			});
+
+			rin.game.currentPlayer.activeWeapon = weaponData.weapon;
+			winManager.updateActiveWeapon(weaponData.slot + 1, oldSlot + 1);
+		},
 		update()
 		{
 			rin.inputHandler.updateMouseDown();
-			rin.LineDrawer.updateAll();
-			rin.winManager.update();
-			rin.PlayerClass.updateAllPositions();
-			rin.EnemyClass.updateAllPositions();
+			LineDrawer.updateAll();
+			winManager.update();
+			Player.updateAllPositions();
+			Enemy.updateAllPositions();
 		},
 	},
 	socket:
@@ -319,21 +365,21 @@ let rin =
 		{
 			rin.$socket.on('connectToRoom', ()=>
 			{	
-				rin.$socket.on('newPlayer', rin.PlayerClass.addNewPlayer);
-				rin.$socket.on('playerDisconnect', rin.PlayerClass.removePlayer);
-				rin.$socket.on('onInitialJoinPopulatePlayers', rin.PlayerClass.onInitialJoinPopulatePlayers);
-				// rin.$socket.on('onInitialJoinPopulateEnemies', rin.EnemyClass.onInitialJoinPopulateEnemies);
-				// rin.$socket.on('onInitialJoinPopulateBonus', rin.BonusClass.onInitialJoinPopulateBonus);
+				rin.$socket.on('newPlayer', Player.addNewPlayer);
+				rin.$socket.on('disconnectPlayer', Player.removePlayer);
+				rin.$socket.on('onInitialJoinPopulatePlayers', Player.onInitialJoinPopulatePlayers);
+				rin.$socket.on('onInitialJoinPopulateEnemies', Enemy.onInitialJoinPopulateEnemies);
+				rin.$socket.on('onInitialJoinPopulateBonus', Bonus.onInitialJoinPopulateBonus);
 				
-
-				rin.$socket.on('updateClientOnPlayers', rin.PlayerClass.updateAll);
-				// rin.$socket.on('updateClientOnEnemies', rin.EnemyClass.updateAll);
-				// rin.$socket.on('createEnemy', rin.EnemyClass.createEnemy);
-				// rin.$socket.on('removeEnemy', rin.EnemyClass.removeEnemy);
+				rin.$socket.on('successChangeInventory', rin.game.successChangeInventory);
+				rin.$socket.on('updateClientOnPlayers', Player.updateAll);
+				rin.$socket.on('updateClientOnEnemies', Enemy.updateAll);
+				rin.$socket.on('createEnemy', Enemy.createEnemy);
+				rin.$socket.on('removeEnemy', Enemy.removeEnemy);
 
 				rin.$socket.on('createGunShot', rin.GunHandler.createGunShot);
-				// rin.$socket.on('createBonus', rin.BonusClass.createBonus);
-				// rin.$socket.on('destroyBonus', rin.BonusClass.destroyBonus);
+				rin.$socket.on('createBonus', Bonus.createBonus);
+				rin.$socket.on('destroyBonus', Bonus.destroyBonus);
 
 
 				rin.inputHandler.init();	
@@ -350,7 +396,7 @@ let rin =
 		{
 			let endx = data.startx + data.length*Math.cos(data.angle/180*Math.PI),
 				endy = data.starty + data.length*Math.sin(data.angle/180*Math.PI),
-				graphics = new rin.LineDrawer().graphics;
+				graphics = new LineDrawer().graphics;
 
 			graphics.moveTo(data.startx, data.starty);
 			graphics.lineTo(endx, endy);

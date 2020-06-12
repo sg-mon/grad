@@ -1,10 +1,10 @@
-export class Enemy
+class Enemy
 {
 	static wave  = {};
 	static group = null;
 	static createEnemy(data)
 	{
-		new Enemy(data.id, data.position);
+		new Enemy(data.id, data.position, data.type);
 	}
 	static removeEnemy(id)
 	{
@@ -31,10 +31,11 @@ export class Enemy
 			if(!(id in Enemy.wave))
 				new Enemy(id, data[id].position);
 	}
-	constructor(id, pos)
+	constructor(id, pos, type)
 	{
 		this.id = id;
-		this.gameObj = Enemy.group.create(pos[0], pos[1], 'enemy');
+		this.type = type;
+		this.gameObj = Enemy.group.create(pos[0], pos[1], 'enemy-' + this.type + '-' + Math.floor(Math.random() * 2 + 1));
 		this.gameObj.anchor.x = 0.5;
 		this.gameObj.anchor.y = 0.5;
 		this.x = pos[0];

@@ -1,5 +1,6 @@
-export let winManager = 
+let winManager =
 {
+	slickUI: null,
 	resizeNeeded: false,
 	ticksSinceEvent: 0,
 	healthbar: null,
@@ -13,7 +14,6 @@ export let winManager =
 		hp: null,
 		ammo: null,
 		kills: null,
-		fps: null,
 	},
 	init()
 	{
@@ -80,17 +80,15 @@ export let winManager =
 			y     = 16;
 
 		this.statPanel = new SlickUI.Element.Panel(x,y,sizex,sizey);
-		rin.slickUI.add(this.statPanel);
+		this.slickUI.add(this.statPanel);
 		this.statPanel.alpha = 0.8;
 		this.healthbarValues.hp    = new SlickUI.Element.Text(16+8,16+4,  'HP: 100', 24);
 		this.healthbarValues.ammo  = new SlickUI.Element.Text(16+8,16+32, 'Bullets: 100', 24);
 		this.healthbarValues.kills = new SlickUI.Element.Text(16+8,16+60, 'KIlls: 0', 24);
-		this.healthbarValues.fps   = new SlickUI.Element.Text(16+8,16+94, 'FPS: 0', 10);
 
-		rin.slickUI.add(this.healthbarValues.hp);
-		rin.slickUI.add(this.healthbarValues.ammo);
-		rin.slickUI.add(this.healthbarValues.kills);
-		rin.slickUI.add(this.healthbarValues.fps);
+		this.slickUI.add(this.healthbarValues.hp);
+		this.slickUI.add(this.healthbarValues.ammo);
+		this.slickUI.add(this.healthbarValues.kills);
 	},
 	updateHealthBar()
 	{
@@ -100,8 +98,6 @@ export let winManager =
 		this.healthbarValues.ammo.value  = 'Bullets: ' + rin.game.currentPlayer.inventory[rin.game.currentPlayer.activeWeapon].ammo;
 		this.healthbarValues.kills.value = 'Kills: ' + rin.game.currentPlayer.kills;
 		this.healthbarValues.hp.value    = 'HP: ' + rin.game.currentPlayer.hp;
-
-		
 	},
 	updateDeathMessage()
 	{
@@ -131,7 +127,7 @@ export let winManager =
 		rin.layer.resize(w,h);
 		rin.game.ins.camera.follow(rin.game.currentPlayer.gameObj, Phaser.Camera.FOLLOW_TOPDOWN, 0.1, 0.1);
 		this.resizeUI();
-		// layer.resizeWorld();
+		layer.resizeWorld();
 		console.log("resize " + window.innerHeight * window.devicePixelRatio);
 	},
 	update()
@@ -148,6 +144,14 @@ export let winManager =
 
 		this.ticksSinceEvent = 0
 		this.resizeNeeded = false;
-		this.resizeGameWindow();
+		// this.resizeGameWindow();
 	},
+	updateActiveWeapon(slot, oldSlot)
+	{
+		let oldSlotEl = '#inv' + oldSlot;
+		let newSlotEl = '#inv' + slot;
+
+		$(oldSlotEl).css('opacity', '0.5');
+		$(newSlotEl).css('opacity', '1');
+	}
 };

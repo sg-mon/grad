@@ -10,6 +10,8 @@ var gulp             = require('gulp'),
 
 // файлы для сборки
 var jsFiles = [
+	'js/modules/*.js',
+	'js/classes/*.js',
 	'js/main.js'
 ];
 
@@ -66,37 +68,12 @@ gulp.task('browser-sync', () => {
 
 // таск следит за изменениями файлов и вызывает другие таски
 gulp.task('watch', function() {
-	gulp.watch(['js/vendors/*.js', 'js/*.js', '!js/main.min.js', 'js/modules/*.js'], gulp.parallel('scripts'));
+	gulp.watch(['js/vendors/*.js', 'js/*.js', '!js/main.min.js', 'js/modules/*.js', 'js/classes/*.js'], gulp.parallel('scripts'));
 	gulp.watch('./*.html', gulp.parallel(() => { browserSync.reload(); }));
 	gulp.watch('js/*.js', gulp.parallel(() => { browserSync.reload(); }));
 	gulp.watch('../assets/*', gulp.parallel(() => { browserSync.reload(); }));
 });
 
-// таск сжимает картинки без потери качества
-gulp.task('img', () => {
-	return gulp.src(['../assets/*.png', '../assets/*.jpg']) // откуда брать картинки
-	.pipe(cache(
-		imagemin([
-			pngquant({
-				speed: 1,
-				quality: 80 //lossy settings
-			}),
-			imageminZopfli({
-				more: true,
-				iterations: 10 // very slow but more effective
-			}),
-			//jpg lossless
-			imagemin.jpegtran({
-				progressive: true
-			}),
-			//jpg very light lossy, use vs jpegtran
-			imageminMozjpeg({
-				quality: 85
-			})
-		])
-	))
-	.pipe(gulp.dest('../assets/')) // куда класть сжатые картинки
-});
 
 // сборка проекта
 gulp.task('build', gulp.series('scripts-build', 'scripts-ven', () => { console.log('builded');}))

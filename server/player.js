@@ -13,7 +13,7 @@ class Player
 		this.hp     = 100;
 		this.dead   = false;
 		this.angle  = 0;
-		this.speed  = 200;
+		this.speed  = 400;
 
 		this.room                  = room;
 		this.namespace             = namespace;
@@ -49,8 +49,8 @@ class Player
 
 		this.body = new p2.Body({
 			mass: 1,
-			position: [120,120],
-			id: this.id,
+			position: [200,200],
+			id: `${this.id}$${this.room}`
 		});
 
 		let bodyShape = new p2.Box({width: constants.PLAYERSIZE, height: constants.PLAYERSIZE});
@@ -61,12 +61,13 @@ class Player
 	}
 	changeInventory(invInd)
 	{
-		if(invInd <= 0
-			|| invInd > this.inventory.length - 1
-			|| this.inventory[slotNumber] === null)
+		if(invInd < 0
+			|| invInd >= Object.keys(this.inventory).length
+			|| !Object.values(this.inventory)[invInd])
 			return;
-
-		this.activeWeapon = invInd;
+		let oldWeapon = JSON.parse(JSON.stringify(this.activeWeapon));
+		this.activeWeapon = Object.values(this.inventory)[invInd].name;
+		this.socket.emit('successChangeInventory', {weapon: this.activeWeapon, oldWeapon: oldWeapon, slot: invInd});
 	}
 
 	useRequest()
@@ -79,7 +80,8 @@ class Player
 		{
 			activeWeapon.ammo--;
 			activeWeapon.cooldown = constants.INVENTORYDATA[activeWeapon.name].cooldown;
-			if (GunHandler.rifleShoot(this.room, this.angle, this.body.position, this.id))
+
+			if (GunHandler[activeWeapon.name + 'Shoot'](this.room, this.angle, this.body.position, this.id))
 				this.kills++;
 		}
 	}
@@ -110,7 +112,7 @@ class Player
 			};
 		}
 
-		this.body.position = [120, 120];
+		this.body.position = [200, 200];
 	}
 
 	updateSpeed()
@@ -167,7 +169,7 @@ class Player
 		this.dead          = true;
 		this.respawnTimer  = constants.RESPAWNTIME;
 		this.body.velocity = [0,0];
-		this.body.position = [120, -500];
+		this.body.position = [200, -500];
 		this.inputs.left  = false;
 		this.inputs.right = false;
 		this.inputs.up    = false;

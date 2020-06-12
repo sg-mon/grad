@@ -1,4 +1,4 @@
-export class LineDrawer
+class LineDrawer
 {
 	static group = null;
 	static list = {};

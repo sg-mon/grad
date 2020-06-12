@@ -17,6 +17,34 @@
 <body ng-controller="MainCtrl">
 	<div class="content _no-game">
 		<div class="_overlay overlay">
+			<div class="popup statistic-popup">
+				<table>
+					<tr>
+						<td>Лучший стрелок</td>
+						<td><span id="kills"></span> убийств</td>
+					</tr>
+					<tr>
+						<td>Жертва</td>
+						<td>выведен из строя <span id="deads"></span></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+					</tr>
+				</table>
+			</div>
+			<div class="popup name-popup">
+				<h2>Введите ваше имя:</h2>
+				<input type="text" name="name">
+			</div>
 			<!-- <div class="popup play-popup">
 				<div onclick="rin.connect('pve')" class="play-popup-item _pve">
 					<div class="play-popup-item__descr">
@@ -29,6 +57,9 @@
 					</div>
 				</div>
 			</div> -->
+			<div class="popup _room-error">
+				<div>К этой комнате невозможно подключиться!</div>
+			</div>
 			<div class="popup room-create">
 				<form onsubmit="rin.rooms.createReq(event)" class="room-create-form">
 					<table>
@@ -42,21 +73,32 @@
 							<td>Максимум игроков</td>
 							<td>
 								<select name="playerCount">
-									<option>2</option>
-									<option>4</option>
-									<option>8</option>
-									<option>16</option>
+									<option value="1">1</option>
+									<option value="2">2</option>
+									<option value="4">4</option>
+									<option value="8">8</option>
+									<option value="16">16</option>
 								</select>
 							</td>
 						</tr>
 						<tr>
 							<td>Сложность</td>
 							<td>
-								<select name="waveCount">
-									<option>Легко</option>
-									<option>Средняя</option>
-									<option>Тяжелая</option>
-									<option>Кошмар</option>
+								<select name="difficulty">
+									<option value="easy">Легко</option>
+									<option value="medium">Средняя</option>
+									<option value="difficult">Трудная</option>
+									<option value="nightmare">Кошмар</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>Локация</td>
+							<td>
+								<select name="location">
+									<option value="default">Луг</option>
+									<option value="desert">Пустыня</option>
+									<option value="canyon">Каньон</option>
 								</select>
 							</td>
 						</tr>
@@ -96,12 +138,20 @@
 									<td><b>Игроки</b></td>
 									<td class="_room-players"></td>
 								</tr>
+								<tr>
+									<td><b>Сложность</b></td>
+									<td class="_room-difficulty"></td>
+								</tr>
+								<tr>
+									<td><b>Локация</b></td>
+									<td class="_room-location"></td>
+								</tr>
 							</table>
 							<button onclick="rin.rooms.join(event)" class="btn room-item-btn">Присоединиться</button>
 						</div>
 					</div>
 					<p class="room-items-empty">
-						Сейчас на сервере нет активных игр, попробуйте
+						Сейчас на сервере нет активных игр
 					</p>
 					<p class="room-items-btn-wr">
 						<button onclick="rin.popups.open('.room-create')" class="btn room-items-btn btn_big">Создать свою</button>
@@ -115,13 +165,22 @@
 				<section class="play-descr">
 					<h2>Как играть?</h2>
 					<p>
-						<span class="play-title-text">Green Game</span> - это браузерный многопользовательский шутер с двумя режимами: <b>Командная игра</b> и <b>Перестрелка</b>.
+						<span class="play-title-text">Green Game</span> - это браузерный многопользовательский шутер.
 					</p>
 					<p>
-						Цель игры <b>командной игры</b> - пережить атаки зомби в заданном количестве раундов, если все участники раунда одновременно выведены из строя, игра заканчивается с поражением. Если в конце раунда в живых остался хотя бы один игрок, он считается пройденным и прочие участники возвращаются.
+						Чтобы подключиться к игре нужно создать новую комнату или присоединиться к существующей, если она есть.
 					</p>
 					<p>
-						Цель <b>перестрелки</b> - набрать большее число очков, игра заканчивается, когда количество полученных очков достигла заданного при создании комнаты.
+						При создании комнаты вы задаете ее <b>Название</b>, выбираете <b>Локацию</b> и <b>Сложность</b>, а также устанавливаете ограничение на <b>Количество игроков</b>. Потом появляется возможность к ней подключиться.
+					</p>
+					<p>
+						Управление в игре осуществляется клавишами <b>W, A, S, D</b> - <b>Вверх, Влево, Вниз, Вправо</b> соответственно. Для выстрелов используется <b>ЛКМ</b>, для смены оружия - клавиши <b>1, 2, 3</b> и тд.
+					</p>
+					<p>
+						Игра начнется через 30 секунд после подключения второго игрока.
+					</p>
+					<p>
+						Целью игры является пережить нападения зомби. Количество нападений и вид врагов зависит от уровня сложности комнаты. Если один из игроков был убит во время волны нападений, он восстановится к началу следующей. Если убиты были все, игра заканчивается с проигрышем. В конце игры отображается статистика.
 					</p>
 					<p>
 						<button onclick="rin.connect('pve')" class="btn btn_big play-btn">Подключиться!</button>
@@ -156,7 +215,7 @@
 			<div id="hp"></div>
 		</div>
 
-		<div class="inv-slot" id="inv1">
+		<div class="inv-slot" style="opacity: 1" id="inv1">
 			<p>1</p>
 			<img src="/assets/akiconrotated.png" class="inv-icon">
 		</div>

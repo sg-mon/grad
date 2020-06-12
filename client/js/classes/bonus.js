@@ -1,4 +1,4 @@
-export class Bonus
+class Bonus
 {
 	static list  = {};
 	static group = null;
@@ -14,7 +14,6 @@ export class Bonus
 	}
 	static onInitialJoinPopulateBonus(data)
 	{
-		console.log('onInitialJoinPopulateBonus');
 		for(let id in data)
 			new Bonus('ammo', data[id].type, data[id].position, id);
 	}
