@@ -6,15 +6,16 @@ let socketio  = require('./socket.js').io;
 
 class Player
 {
-	constructor(socket, namespace, room)
+	constructor(socket, namespace, room, name)
 	{
 		this.id     = socket.id;
+		this.name   = name;
 		this.socket = socket;
 		this.hp     = 100;
 		this.dead   = false;
 		this.angle  = 0;
-		this.speed  = 400;
-
+		this.speed  = 200;
+		this.deaths = 0;
 		this.room                  = room;
 		this.namespace             = namespace;
 		this.respawnTimer          = 0;
@@ -99,18 +100,18 @@ class Player
 		this.dead          = false;
 		this.respawnTimer  = 0;
 
-		for (let inv in constants.INVENTORYDATA)
-		{
-			if (!constants.INVENTORYDATA[inv].initial)
-				continue;
+		// for (let inv in constants.INVENTORYDATA)
+		// {
+		// 	if (!constants.INVENTORYDATA[inv].initial)
+		// 		continue;
 
-			this.inventory[inv] =
-			{
-				ammo: constants.INVENTORYDATA[inv].ammo,
-				cooldown: constants.INVENTORYDATA[inv].cooldown,
-				name: constants.INVENTORYDATA[inv].name,
-			};
-		}
+		// 	this.inventory[inv] =
+		// 	{
+		// 		ammo: constants.INVENTORYDATA[inv].ammo,
+		// 		cooldown: constants.INVENTORYDATA[inv].cooldown,
+		// 		name: constants.INVENTORYDATA[inv].name,
+		// 	};
+		// }
 
 		this.body.position = [200, 200];
 	}
@@ -134,18 +135,15 @@ class Player
 
 	checkWorldBounds()
 	{
-		if (this.body.position[0] <= 32) 
-			if (this.body.velocity[0] < 0)
-				this.body.velocity[0] = 0;
+		if (this.body.position[0] <= 32)
+			this.body.position[0] = 32;
 		if (this.body.position[0] >= constants.WORLDWIDTH - 32)
-			if (this.body.velocity[0] > 0)
-				this.body.velocity[0] = 0;
+			this.body.position[0] = constants.WORLDWIDTH - 32;
+
 		if (this.body.position[1] <= 32)
-			if (this.body.velocity[1] < 0) 
-				this.body.velocity[1] = 0;
+			this.body.position[1] = 32;
 		if (this.body.position[1] >= constants.WORLDHEIGHT - 32)
-			if (this.body.velocity[1] > 0)
-				this.body.velocity[1] = 0;
+			this.body.position[1] = constants.WORLDHEIGHT - 32;
 	}
 
 	updateDamage()
@@ -166,6 +164,7 @@ class Player
 
 	die()
 	{
+		this.deaths++;
 		this.dead          = true;
 		this.respawnTimer  = constants.RESPAWNTIME;
 		this.body.velocity = [0,0];
@@ -187,7 +186,10 @@ class Player
 		this.justDamaged = true;
 
 		if(this.hp <= 0)
+		{
+			this.hp = 0;
 			this.die();
+		}
 	}
 
 	updateCooldowns()

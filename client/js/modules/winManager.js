@@ -103,12 +103,11 @@ let winManager =
 	{
 		if(rin.game.currentPlayer.hp <= 0)
 		{
-			if(this.deathmessagetimer <= 0)
+			if(this.deathmessagetimer < 0)
 			{
-				this.deathmessagetimer = 600;
+				this.deathmessagetimer = 360;
 				this.deathmessage.css('display', 'block');	
 			}
-			this.resizeDeathMessage();
 			this.deathmessagetimer--;
 			let respawnTime = Math.ceil(this.deathmessagetimer / 60);
 			this.deathmessagetext.text("Перерождение через " + respawnTime + " сек.");
@@ -127,8 +126,7 @@ let winManager =
 		rin.layer.resize(w,h);
 		rin.game.ins.camera.follow(rin.game.currentPlayer.gameObj, Phaser.Camera.FOLLOW_TOPDOWN, 0.1, 0.1);
 		this.resizeUI();
-		layer.resizeWorld();
-		console.log("resize " + window.innerHeight * window.devicePixelRatio);
+		rin.layer.resizeWorld();
 	},
 	update()
 	{
@@ -136,14 +134,15 @@ let winManager =
 			return;
 		this.updateHealthBar();
 		this.updateDeathMessage();
-		if(!this.resizeNeeded)
-			return;
-		this.ticksSinceEvent++;
-		if(this.ticksSinceEvent < 5)
-			return;
+		
+		// if(!this.resizeNeeded)
+		// 	return;
+		// this.ticksSinceEvent++;
+		// if(this.ticksSinceEvent < 5)
+		// 	return;
 
-		this.ticksSinceEvent = 0
-		this.resizeNeeded = false;
+		// this.ticksSinceEvent = 0
+		// this.resizeNeeded = false;
 		// this.resizeGameWindow();
 	},
 	updateActiveWeapon(slot, oldSlot)

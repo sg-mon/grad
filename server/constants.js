@@ -25,7 +25,7 @@ exports.INVENTORYDATA = {
 exports.PLAYERSIZE  = 64;
 exports.RIFLEDAMAGE = 30;
 exports.SHOTGUNDAMAGE = 15;
-exports.SNIPERDAMAGE = 40;
+exports.SNIPERDAMAGE = 60;
 exports.RESPAWNTIME = 360;
 
 // коллизии
@@ -66,6 +66,7 @@ exports.ENEMYTYPE =
 	{
 		hp: 100,
 		maxSpeed: 120,
+		// damage: 100,
 		damage: 10,
 	},
 	medium:
@@ -77,7 +78,7 @@ exports.ENEMYTYPE =
 };
 
 // мир
-exports.ENEMYHITDELAY = 2;
+exports.ENEMYHITDELAY = 1;
 exports.ENEMYHITRADIUS = 70;
 exports.BONUSSIZE = 4;
 exports.MAXBONUSCOUNT = 5;
@@ -87,6 +88,7 @@ exports.GAME =
 	easy:
 	{
 		waves:[{common:8,medium:0},{common:12,medium:0},{common:16,medium:0},{common:26,medium:0},]
+		// waves:[{common:1,medium:0}]
 	},
 	medium:
 	{

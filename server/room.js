@@ -1,3 +1,4 @@
+
 let socketio   = require('./socket.js').io;
 let Enemy      = require('./enemy.js');
 let world      = require('./handlers/world.js');
@@ -52,6 +53,7 @@ class Room
 		this.bonuses        = Object.assign({}, bonusTemplate);
 		this.leaderId       = socketId;
 		this.name           = name;
+		this.stopGame       = false;
 		this.players        =
 		{
 			list: {},
@@ -95,8 +97,8 @@ class Room
 		this.enemies =
 		{
 			list: {},
-			waveLength: 0,
 			waveNumber: 0,
+			wavesOver: false,
 			init: false,
 			update(playerList, diff, roomId)
 			{
@@ -130,13 +132,24 @@ class Room
 			},
 			createWave(diff, roomId)
 			{
+				if (!constants.GAME[diff].waves[this.waveNumber])
+				{
+					this.wavesOver = true;
+					return;
+				}
+
 				for (let enemyType in constants.GAME[diff].waves[this.waveNumber])
-					for (var i = 0; i < constants.GAME[diff].waves[this.waveNumber][enemyType]; i++)
+					for (let i = 0; i < constants.GAME[diff].waves[this.waveNumber][enemyType]; i+=2)
 					{
 						let enemy = new Enemy(enemyType, roomId);
-						// socket.emitAll('createEnemy', {id: enemy.id,  position: [enemy.x, enemy.y],  type: enemy.type});
 						socketio.of('/pve').to(roomId).emit('createEnemy', {id: enemy.id,  position: [enemy.x, enemy.y],  type: enemy.type});
 						this.list[enemy.id] = enemy;
+						setTimeout(()=>
+						{
+							enemy = new Enemy(enemyType, roomId);
+							socketio.of('/pve').to(roomId).emit('createEnemy', {id: enemy.id,  position: [enemy.x, enemy.y],  type: enemy.type});
+							this.list[enemy.id] = enemy;
+						},rMath.rand(400, 1500));
 					}
 
 				this.waveNumber++;
@@ -150,8 +163,8 @@ class Room
 				for (let id in this.list)
 					if (this.list[id].dead)
 					{
-						delete this.list[id];
 						socketio.of('/pve').to(roomId).emit('destroyBonus', id);
+						delete this.list[id];
 						continue;
 					}
 
@@ -224,7 +237,7 @@ class Room
 			player.angle  = data.angle;
 		});
 
-		socket.broadcast.to(this.id).emit('newPlayer', socket.id);
+		socketio.of('/pve').to(this.id).emit('newPlayer', socket.id);
 
 		socket.on('useRequest', function(cursorPosition)
 		{
@@ -239,12 +252,53 @@ class Room
 
 		this.players.list[player.id] = player;
 	}
+	endGame()
+	{
+		this.stopGame = true;
+		let data =
+		{
+			kills: ['', 0],
+			deaths: ['', 0]
+		};
+
+		for (let id in this.players.list)
+		{
+			if (this.players.list[id].deaths > data.deaths[1] || !data.deaths[0])
+			{
+				data.deaths[0] = this.players.list[id].name;
+				data.deaths[1] = this.players.list[id].deaths;
+			}
+
+			if (this.players.list[id].kills > data.kills[1] || !data.kills[0])
+			{
+				data.kills[0] = this.players.list[id].name;
+				data.kills[1] = this.players.list[id].kills;
+			}
+		}
+		socketio.of('/pve').to(this.id).emit('endGame', data);
+
+		for (let socketId in socketio.of('/pve').to(this.id).sockets)
+		{
+			socketio.of('/pve').to(this.id).sockets[socketId].leave(this.id);
+			delete this.players.list[socketId];
+		}
+	}
 	updateAll()
 	{
 		if (!this.enemies.init && Object.keys(this.players.list).length === this.maxPlayerCount)
 			this.enemies.init = true;
 
+		if (this.enemies.wavesOver)
+		{
+			this.endGame();
+			return;
+		}
+
 		this.players.update(this.id);
+
+		if (!Object.keys(this.players.list).length)
+			return;
+
 		this.enemies.update(this.players.list, this.difficulty, this.id);
 		this.bonuses.update(this.id);
 	}

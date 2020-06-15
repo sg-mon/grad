@@ -2,13 +2,23 @@ class Bonus
 {
 	static list  = {};
 	static group = null;
-
+	static destroyAll()
+	{
+		for (let id in Bonus.list)
+		{
+			Bonus.list[id].destroy();
+			delete Bonus.list[id];
+		}
+	}
 	static createBonus(data)
 	{
 		new Bonus(data.category, data.type, data.position, data.id);
 	}
 	static destroyBonus(id)
 	{
+		if (!Bonus.list[id])
+			return;
+
 		Bonus.list[id].destroy();
 		delete Bonus.list[id];
 	}

@@ -157,7 +157,11 @@ let CollisionHandler =
 							else if (item.type === 'sniperammo')
 								player.inventory.sniper.ammo += item.quantity;
 							else if (item.type === 'cure')
+							{
 								player.hp += 20;
+								if (player.hp > 100)
+									player.hp = 100;
+							}
 							item.destroy();
 						}
 						catch(error)

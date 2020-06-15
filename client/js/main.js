@@ -10,10 +10,99 @@ let rin =
 	$socket: null,
 	name: '',
 	layer: null,
+	setSocketName(e)
+	{
+		e.preventDefault();
+
+		if (!$(e.target).find('input').val())
+			return;
+		this.name = $(e.target).find('input').val();
+		this.connect('pve');
+		this.cookie.set('name', this.name, {expires:new Date(new Date().getFullYear() + 5, 1).toUTCString(), path: '/'});
+		this.showName();
+		this.popups.close('.name-popup');
+	},
+	showName()
+	{
+		$('#playerName').show();
+		$('#playerName').html(`Вы подключились как <b>${this.name}</b>`);
+	},
 	init()
 	{
-		this.popups.open('.statistic-popup');
 		this.$socket = io();
+		if (this.cookie.get('name'))
+		{
+			this.name = JSON.parse(this.cookie.get('name')[1]);
+			this.showName();
+			this.connect('pve');
+		}
+	},
+	closeGame()
+	{
+		window.location.reload();
+		return;
+
+		// $('._no-game').each(function(ind)
+		// {
+		// 	$(this).removeClass('hide');
+		// });
+		// $('.game-wr').addClass('hide');
+		// rin.popups.close('.statistic-popup');
+		
+		// rin.game.ins.time.events.remove(rin.game.timer);
+		// rin.game.timer = 
+		// rin.game.ins           = null
+		// rin.game.map           = null;
+		// rin.game.layer         = null;
+		// rin.game.currentPlayer = null;
+		// Bonus.destroyAll();
+		// Enemy.destroyAll();
+		// Player.destroyAll();
+		// this.inputHandler.stop();
+		// $('#game').html('');
+	},
+	getEnding(num, type)
+	{
+		if (type === 'kills')
+			switch (num % 10)
+			{
+				case 1:
+					return num + ' убийство';
+				break;
+				case 2:
+				case 3:
+				case 4:
+					return num + ' убийства';
+				break;
+				default:
+					return num + ' убийств';
+				break;
+			}
+		else if (type === 'deaths')
+			switch (num % 10)
+			{
+				case 1:
+					return num + ' смерть';
+				break;
+				case 2:
+				case 3:
+				case 4:
+					return num + ' смерти';
+				break;
+				default:
+					return num + ' смертей';
+				break;
+			}
+	},
+	endGame(data)
+	{
+		$('.statistic-popup').find('#kills-name').html(data.kills[0]);
+		$('.statistic-popup').find('#deaths-name').html(data.deaths[0]);
+
+		$('.statistic-popup').find('#kills').html(rin.getEnding(data.kills[1], 'kills'));
+		$('.statistic-popup').find('#deaths').html(rin.getEnding(data.deaths[1], 'deaths'));
+
+		rin.popups.open('.statistic-popup');
 	},
 	async initGame()
 	{
@@ -192,6 +281,12 @@ let rin =
 			left: false,
 		},
 		sendCooldown: 1,
+		stop()
+		{
+			document.onkeydown = ()=>{};
+			document.onkeyup = ()=>{};
+			window.onblur = ()=>{};
+		},
 		init()
 		{
 			//Handle key inputs
@@ -232,7 +327,7 @@ let rin =
 		},
 		updateMouseDown()
 		{
-			if (rin.game.ins.input.activePointer.leftButton.isDown)
+			if (rin.game.ins && rin.game.ins.input.activePointer.leftButton.isDown)
 			{
 				this.sendCooldown--;
 				if (!this.sendCooldown)
@@ -247,6 +342,7 @@ let rin =
 	{
 		ins:   null,
 		map:   null,
+		timer: null,
 		layer: null,
 		start: false,
 		location: 'default',
@@ -304,7 +400,7 @@ let rin =
 
 			rin.game.initCurrentPlayer(rin.$socket.id);
 			rin.game.ins.camera.follow(rin.game.currentPlayer.gameObj, Phaser.Camera.FOLLOW_TOPDOWN, 0.1, 0.1);
-			rin.game.ins.time.events.loop(100, rin.socket.updateServer, this);
+			rin.game.timer = rin.game.ins.time.events.loop(100, rin.socket.updateServer, this);
 			rin.game.start = true;
 
 			rin.$socket.emit('joinRoom', rin.rooms.currentId, rin.name);
@@ -354,8 +450,8 @@ let rin =
 			rin.inputHandler.updateMouseDown();
 			LineDrawer.updateAll();
 			winManager.update();
-			Player.updateAllPositions();
-			Enemy.updateAllPositions();
+			// Player.updateAllPositions();
+			// Enemy.updateAllPositions();
 		},
 	},
 	socket:
@@ -380,6 +476,7 @@ let rin =
 				rin.$socket.on('createGunShot', rin.GunHandler.createGunShot);
 				rin.$socket.on('createBonus', Bonus.createBonus);
 				rin.$socket.on('destroyBonus', Bonus.destroyBonus);
+				rin.$socket.on('endGame', rin.endGame);
 
 
 				rin.inputHandler.init();	
@@ -416,13 +513,14 @@ let rin =
 			$('body').addClass('ow-hidden');
 			$(popup).addClass('_show');
 
-			setTimeout(()=>
-			{
-				$(document).on('click',(e)=>{
-					if ($(e.target).closest(popup).length) return;
-					this.close(popup);
-				});
-			}, 10);
+			if (!$(popup).prop("classList").contains('_no-click-outside'))
+				setTimeout(()=>
+				{
+					$(document).on('click',(e)=>{
+						if ($(e.target).closest(popup).length) return;
+						this.close(popup);
+					});
+				}, 10);
 		},
 		close: function(popup)
 		{
@@ -432,6 +530,33 @@ let rin =
 
 			if (!$(popup).prop("classList").contains('_no-click-outside'))
 				$(document).off('click');
+		}
+	},
+	cookie:
+	{
+		set(name, value, options = {})
+		{
+			let updCookie = name + '=' + JSON.stringify(value);
+			for (let propName in options)
+			{
+				updCookie += "; " + propName;
+				let propValue = options[propName];
+				if (propValue !== true)
+					updCookie += "=" + propValue;
+			}
+
+			document.cookie = updCookie;
+		},
+		get(name)
+		{
+			let match = document.cookie.match(new RegExp(
+			"(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+			));
+			return match;
+		},
+		delete(name)
+		{
+			document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 		}
 	},
 };

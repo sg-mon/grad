@@ -2,9 +2,18 @@ class Player
 {
 	static list    = {};
 	static group   = null;
+	static destroyAll()
+	{
+		for (let id in Player.list)
+		{
+			Player.list[id].gameObj.kill();
+			delete Player.list[id];
+		}
+	}
 	static addNewPlayer(id)
 	{
-		new Player(id);
+		if (!(id in Player.list))
+			new Player(id);
 	}
 	static removePlayer(id)
 	{
@@ -14,7 +23,8 @@ class Player
 	static onInitialJoinPopulatePlayers(data)
 	{
 		for (let id in data)
-			new Player(id);
+			if (!(id in Player.list))
+				new Player(id);
 	}
 
 	static updateAll(data)
@@ -23,17 +33,6 @@ class Player
 			if (Player.list[id])
 				Player.list[id].update(data[id]);
 	}
-	static updateAllPositions()
-	{
-		for (let id in Player.list)
-			Player.list[id].updatePositions();
-	}
-
-	static changeInventory()
-	{
-
-	}
-
 	constructor(id, current)
 	{
 		if (!id)
@@ -41,8 +40,6 @@ class Player
 
 		this.id          = id;
 		this.toDelete    = false;
-		this.x           = 260;
-		this.y           = 260;
 		this.angle       = 0;
 
 		if (current)
@@ -69,8 +66,8 @@ class Player
 	}
 	update(data)
 	{
-		this.x = data.position[0];
-		this.y = data.position[1];
+		this.gameObj.x = data.position[0];
+		this.gameObj.y = data.position[1];
 
 		this.kills = data.kills;
 		this.inventory = data.inventory;
@@ -83,10 +80,5 @@ class Player
 		else
 			rin.game.currentPlayerUpdate(data);
 
-	}
-	updatePositions()
-	{
-		this.gameObj.x = this.x;
-		this.gameObj.y = this.y;
 	}
 }

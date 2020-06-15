@@ -30,7 +30,7 @@ let GunHandler =
 		{
 			let enemyId = result.body.id.match(/^(.+?)\$/)[1];
 			if (RoomList[room].enemies.list[enemyId])
-				killedEnemy = RoomList[room].enemies.list[enemyId].decreaseHp(constants.RIFLEDAMAGE, id);
+				killedEnemy = RoomList[room].enemies.list[enemyId].decreaseHp(constants.RIFLEDAMAGE, RoomList[room].players.list[id]);
 		}
 
 
@@ -66,7 +66,7 @@ let GunHandler =
 			{
 				let enemyId = result.body.id.match(/^(.+?)\$/)[1];
 				if (RoomList[room].enemies.list[enemyId])
-					killedEnemy = RoomList[room].enemies.list[enemyId].decreaseHp(constants.SHOTGUNDAMAGE, id);
+					killedEnemy = RoomList[room].enemies.list[enemyId].decreaseHp(constants.SHOTGUNDAMAGE, RoomList[room].players.list[id]);
 			}
 
 			let length = Math.abs(result.getHitDistance(ray));
@@ -75,42 +75,34 @@ let GunHandler =
 
 		return killedEnemy;
 	},
-
 	sniperShoot(room, angle, position, id)
 	{
-		let distance = 1000;
-		let startx = position[0] + 50*Math.cos(angle/180*Math.PI);
-		let starty = position[1] + 50*Math.sin(angle/180*Math.PI);
-		let killCount = 0;
-		let killedEnemy = false;
+		let distance = 1000,
+			startx = position[0] + 50*Math.cos(angle/180*Math.PI),
+			starty = position[1] + 50*Math.sin(angle/180*Math.PI),
+			killedEnemy = false;
 
 		let ray = new p2.Ray({
-			mode: p2.Ray.ALL, // or ANY
+			mode: p2.Ray.CLOSEST, // or ANY
 			from: [startx, starty],
 			to: [position[0]+distance*Math.cos(angle/180*Math.PI), position[1]+distance*Math.sin(angle/180*Math.PI)],
-			callback(result)
-			{
-				killedEnemy = false;
-
-				let hitPoint = p2.vec2.create();
-				result.getHitPoint(hitPoint, ray);
-				
-				if(result.body !== null && result.body.shapes[0].collisionGroup === constants.ENEMY)
-				{
-					let enemyId = result.body.id.match(/^(.+?)\$/)[1];
-					if (RoomList[room].enemies.list[enemyId])
-						killedEnemy = RoomList[room].enemies.list[enemyId].decreaseHp(constants.SNIPERDAMAGE, id);
-				}
-			}
 		});
-		
+
 		let result = new p2.RaycastResult();
 		world.raycast(result, ray);
-		socketio.of('/pve').to(room).emit('createGunShot', {startx: startx, starty: starty, angle: angle, length: distance});
 
+		if(result.body !== null && result.body.shapes[0].collisionGroup === constants.ENEMY)
+		{
+			let enemyId = result.body.id.match(/^(.+?)\$/)[1];
+			if (RoomList[room].enemies.list[enemyId])
+				killedEnemy = RoomList[room].enemies.list[enemyId].decreaseHp(constants.SNIPERDAMAGE, RoomList[room].players.list[id]);
+		}
+
+
+		let length = Math.abs(result.getHitDistance(ray));
+		socketio.of('/pve').to(room).emit('createGunShot', {startx: startx, starty: starty, angle: angle, length: length});
 		return killedEnemy;
-	}
-
+	},
 };
 
 module.exports = GunHandler;

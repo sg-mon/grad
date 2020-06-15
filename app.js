@@ -7,13 +7,21 @@ let rooms       = Room.list;
 let SOCKET_LIST = {};
 let lastTime = Date.now();
 
-setInterval(function ()
+let game = setInterval(function ()
 {
 	let delta = Date.now() - lastTime;
 
 	lastTime = Date.now();
 	for(let roomId in rooms)
+	{
+		if (rooms[roomId].stopGame)
+		{
+			delete rooms[roomId];
+			socketio.of('/pve').emit('removeRoom', roomId);
+			continue;
+		}
 		rooms[roomId].updateAll();
+	}
 
 	collision.update();
 
@@ -51,6 +59,7 @@ $this
 		if (Object.keys(rooms[roomToJoin].players.list).length >= +rooms[roomToJoin].maxPlayerCount)
 		{
 			console.log(`Room with id ${roomToJoin} already full.`);
+			return;
 		}
 		socket.join(roomToJoin);
 

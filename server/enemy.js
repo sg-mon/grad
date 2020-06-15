@@ -12,14 +12,15 @@ class Enemy
 	{
 		this.id                 = 'enemy-' + rMath.rand(100000, 999999);
 		this.room               = room;
-		this.maxSpeed           = rMath.rand(constants.ENEMYTYPE[type].maxSpeed-15, constants.ENEMYTYPE[type].maxSpeed);
+		this.maxSpeed           = constants.ENEMYTYPE[type].maxSpeed;
+		// this.maxSpeed           = rMath.rand(constants.ENEMYTYPE[type].maxSpeed-15, constants.ENEMYTYPE[type].maxSpeed);
 		this.hp                 = constants.ENEMYTYPE[type].hp;
 		this.damage             = constants.ENEMYTYPE[type].damage;
 		this.type               = type;
 		this.initiateAttack     = false;
 		this.attackDelayCounter = 0;
 		this.angle              = 0;
-		this.target             = '';
+		this.target             = null;
 		this.lastTargetDmg      = 0;
 		this.dead               = false;
 
@@ -40,20 +41,11 @@ class Enemy
 		enemyshape.collisionMask  = constants.PLAYER | constants.BLOCK | constants.BULLET | constants.ENEMY;
 		this.body.addShape(enemyshape);
 		world.addBody(this.body);
-
-		this.updateTarget();
 	}
 	initAttack(target)
 	{
-		this.attackDelayCounter ++;	
-		if (this.attackDelayCounter >= constants.ENEMYHITDELAY)
-		{
-			if (rMath.distanceTo(this.body.position, target.body.position) <= constants.ENEMYHITRADIUS)
-				target.decreaseHealth(this.damage);
-
-			this.attackDelayCounter = 0;
-			this.initiateAttack = false;
-		}
+		this.initiateAttack = true;
+		this.target = target;
 	}
 	decreaseHp(dmg, player)
 	{
@@ -78,86 +70,118 @@ class Enemy
 	}
 	update(playerList)
 	{
-		if (!this.target || !playerList[this.target] || playerList[this.target].dead)
+		if (!this.target || this.target.dead)
 			this.updateTarget(playerList);
 
-
-		if (!this.target || !playerList[this.target] || playerList[this.target].dead)
-		{
-			this.stopVelocity();
-			return;
-		}
-
-		this.updateVelocity(playerList);
+		this.updateVelocity();
 		this.checkWorldBounds();
-		this.updateAngle(playerList);
+		this.updateAngle();
+		this.updateAttack();
+	}
+	updateAttack()
+	{
+		if (!this.initiateAttack)
+			return;
+
+		this.attackDelayCounter++;
+
+		if (this.attackDelayCounter >= constants.ENEMYHITDELAY)
+		{
+			if (rMath.distanceTo(this.body.position, this.target.body.position) <= constants.ENEMYHITRADIUS)
+			{
+				this.stopVelocity();
+				this.target.decreaseHealth(this.damage);
+			}
+
+			this.attackDelayCounter = 0;
+		}
 	}
 	updateTarget(playerList)
 	{
 		if (!playerList || !Object.keys(playerList).length)
 		{
-			this.target = '';
+			this.target = {};
 			return;
 		}
 
-		let currentTarget =
-		{
-			id: '',
-			position: {},
-			distance: -1
-		};
-
 		for (let playerId in playerList)
-		{
-			if ((!~currentTarget.distance ||
-				rMath.distanceTo(playerList[playerId].body.position, playerList[playerId].body.position) < currentTarget.distance)
+			if ((!this.target
+				|| this.target.dead
+				|| !~this.target.distance
+				|| rMath.distanceTo(playerList[playerId].body.position, playerList[playerId].body.position) < this.target.distance)
 				&& !playerList[playerId].dead)
-			currentTarget =
-			{
-				position: playerList[playerId].body.position,
-				id: playerList[playerId].id,
-				distance: rMath.distanceTo(this.body.position, playerList[playerId].body.position)
-			};
-		}
+				this.target = playerList[playerId];
 
-		this.target = currentTarget.id;
 	}
 	checkWorldBounds()
 	{
-		if (this.body.position[0] <= 32) 
-			if (this.body.velocity[0] < 0)
-				this.body.velocity[0] = 0;
-		if (this.body.position[0] >= constants.WORLDWIDTH - 32)
-			if (this.body.velocity[0] > 0)
-				this.body.velocity[0] = 0;
-		if (this.body.position[1] <= 32)
-			if (this.body.velocity[1] < 0) 
-				this.body.velocity[1] = 0;
-		if (this.body.position[1] >= constants.WORLDHEIGHT - 32)
-			if (this.body.velocity[1] > 0)
-				this.body.velocity[1] = 0;
+		if (this.body.position[0] <= 64)
+			this.body.position[0] = 64;
+		if (this.body.position[0] >= constants.WORLDWIDTH - 64)
+			this.body.position[0] = constants.WORLDWIDTH - 64;
+		if (this.body.position[1] <= 64)
+			this.body.position[1] = 64;
+		if (this.body.position[1] >= constants.WORLDHEIGHT - 64)
+			this.body.position[1] = constants.WORLDHEIGHT - 64;
 	}
-	updateVelocity(playerList)
+	updateVelocity()
 	{
-		if(playerList[this.target].body.position[0] > this.body.position[0])
+		let trX = 0,
+			trY = 0;
+
+		if (!this.toPosX && !this.toPosY)
+		{
+			this.toPosX = rMath.rand((constants.WORLDWIDTH / 4), (constants.WORLDWIDTH / 4) * 3);
+			this.toPosY = rMath.rand((constants.WORLDHEIGHT / 4), (constants.WORLDHEIGHT / 4) * 3);
+		}
+		if (this.target && !this.target.dead)
+		{
+			trX = this.target.body.position[0];
+			trY = this.target.body.position[1];
+
+			this.toPosX = 0;
+			this.toPosY = 0;
+		}
+		else if (Math.round(this.body.position[0]/10) === Math.round(this.toPosX/10)
+		&& Math.round(this.body.position[1]/10) === Math.round(this.toPosY/10))
+		{
+			this.toPosX = trX = rMath.rand(256, (constants.WORLDWIDTH - 256));
+			this.toPosY = trY = rMath.rand(256, (constants.WORLDHEIGHT - 256));
+		}
+		else
+		{
+			trX = this.toPosX;
+			trY = this.toPosY;
+		}
+
+		if(trX > this.body.position[0])
 			this.body.velocity[0] = this.maxSpeed;
-		else if(playerList[this.target].body.position[0] < this.body.position[0])
+		else if(trX < this.body.position[0])
 			this.body.velocity[0] = -this.maxSpeed;
 		else
 			this.body.velocity[0] = 0;
 
-		if(playerList[this.target].body.position[1] < this.body.position[1])
+		if(trY < this.body.position[1])
 			this.body.velocity[1] = -this.maxSpeed;
-		else if(playerList[this.target].body.position[1] > this.body.position[1])
+		else if(trY > this.body.position[1])
 			this.body.velocity[1] = this.maxSpeed;
 		else
 			this.body.velocity[1] = 0;
 	}
-	updateAngle(playerList)
+	updateAngle()
 	{
-		let x = playerList[this.target].body.position[0],
-			y = playerList[this.target].body.position[1];
-
+		let x = 0,
+			y = 0;
+		if (this.target && !this.target.dead)
+		{
+			x = this.target.body.position[0];
+			y = this.target.body.position[1];
+		}
+		else
+		{
+			x = this.toPosX;
+			y = this.toPosY;
+		}
 
 		let absAngle = Math.abs(Math.atan((y - this.body.position[1]) / (x - this.body.position[0])) * 180 / Math.PI);
 		if(x > this.body.position[0] && y > this.body.position[1])
