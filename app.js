@@ -1,94 +1,85 @@
-let p2        = require('p2');
-let socket    = require('./server/socket.js');
-let Player    = require('./server/player.js');
-let Enemy     = require('./server/enemy.js');
-let world     = require('./server/handlers/world.js');
-let collision = require('./server/handlers/collision.js');
-let Bonus     = require('./server/bonus.js');
-// let Block     = require('./server/block.js');
-
-let SOCKET_LIST = socket.SOCKET_LIST;
-let playersLength = 0;
-let io = socket.io;
-
-let lastConnectedSocket = null;
-
-// Block.initMap();
-setInterval(function ()
-{
-	if(lastConnectedSocket != socket.getLastConnectedSocket())
-	{
-		lastConnectedSocket = socket.getLastConnectedSocket();
-		SOCKET_LIST[lastConnectedSocket.id] = lastConnectedSocket;
-		Player.onConnect(lastConnectedSocket);
-		playersLength++;
-		Enemy.onPlayerConnect(lastConnectedSocket);
-		Bonus.onPlayerConnect(lastConnectedSocket);
-		// Block.onPlayerConnect(socket);
-		lastConnectedSocket.on('disconnect', function (sock)
-		{
-			lastConnectedSocket.broadcast.emit('playerDisconnect', lastConnectedSocket.id);
-			Player.onDisconnect(lastConnectedSocket);
-			playersLength--;
-			delete SOCKET_LIST[lastConnectedSocket.id];
-		});
-	}
-}, 1000/10);
-
-
-
-//Physics loop
+let socketio    = require('./server/socket.js').io;
+let world       = require('./server/handlers/world.js');
+let $this       = socketio.of('/pve');
+let Room        = require('./server/room.js');
+let collision   = require('./server/handlers/collision.js');
+let rooms       = Room.list;
+let SOCKET_LIST = {};
 let lastTime = Date.now();
 
-let waveNumber = 1;
-
-setInterval(function ()
+let game = setInterval(function ()
 {
-	let enemiesAlive  = Object.keys(Enemy.wave).length,
-		delta = Date.now() - lastTime;
+	let delta = Date.now() - lastTime;
 
 	lastTime = Date.now();
+	for(let roomId in rooms)
+	{
+		if (rooms[roomId].stopGame)
+		{
+			delete rooms[roomId];
+			socketio.of('/pve').emit('removeRoom', roomId);
+			continue;
+		}
+		rooms[roomId].updateAll();
+	}
 
-	Player.update();
+	collision.update();
 
 	world.step(delta/1000);
 
-	collision.update();
-	Bonus.randomSpawn();
-
-	if(!enemiesAlive)
-	{
-		Enemy.createWave();
-	}
+	// Bonus.randomSpawn();
 }, 1000/60);
 
-//Update clients loop
-setInterval(function ()
-{
-	if (Object.keys(SOCKET_LIST).length)
-		for(let i in SOCKET_LIST)
+$this
+.on('connect', (socket) => {
+	SOCKET_LIST[socket.id] = socket;
+
+	socket.emit('roomsList', Room.getRoomsList());
+	socket.on('createRoom', (data)=>
+	{
+		let newRoom = new Room("pve", data, socket.id);
+		socket.emit('newRoom', Room.getRoom(newRoom.id));
+		socketio.of('/pve').emit('roomsList', Room.getRoomsList());
+	});
+
+	socket.on('joinRoom', (roomToJoin, playerName)=>
+	{
+		if (Object.keys(rooms[roomToJoin].players.list).length === +rooms[roomToJoin].maxPlayerCount)
 		{
-			try
-			{
-				SOCKET_LIST[i].emit('updateClientOnPlayers', Player.generateCurrentStatusPackage());
-				SOCKET_LIST[i].emit('updateClientOnEnemies', Enemy.generateCurrentStatusPackage());
-			}
-			catch(error)
-			{
-			  console.log(error, i);
-			}
+			console.log(`Room ${roomToJoin} already fool`);
+			return;
 		}
-}, 1000/40);
 
+		if (!rooms[roomToJoin])
+		{
+			console.log(`No room with id ${roomToJoin}`);
+			return;
+		}
 
-// setInterval(function ()
+		if (Object.keys(rooms[roomToJoin].players.list).length >= +rooms[roomToJoin].maxPlayerCount)
+		{
+			console.log(`Room with id ${roomToJoin} already full.`);
+			return;
+		}
+		socket.join(roomToJoin);
+
+		rooms[roomToJoin].addPlayer(socket, playerName);
+		socketio.of('/pve').emit('updateRoom', Room.getRoomsList());
+	});
+	socket.on('disconnect', ()=>
+	{
+		for (let roomId in rooms)
+			rooms[roomId].players.onDisconnect(roomId, socket.id);
+
+		socketio.of('/pve').emit('updateRoom', Room.getRoomsList());
+	});
+});
+// function updateUsersInRoom(roomToJoin)
 // {
-// 	Block.update();
-// }, 5000);
-
-
-setInterval(()=>
-{
-	if (playersLength)
-		Enemy.updateAll(Player.list);
-}, 200);
+// 	// Send back the number of users in this room to ALL sockets connected to this room
+// 	$this.in(roomToJoin).clients((error,clients)=>
+// 	{
+// 		// io.of("pve").in(roomToJoin).emit('updateMembers',clients.length);
+// 	})
+// }
+module.exports = $this;

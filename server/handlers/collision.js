@@ -3,8 +3,7 @@ let world     = require('./world.js');
 let constants = require('../constants.js');
 let Player    = require('../player.js');
 let Enemy     = require('../enemy.js');
-let Bonus     = require('../bonus.js');
-// let Block = require('../block.js');
+let Room      = require('../room.js');
 
 function orStatementHelper(bodyA, bodyB, value)
 {
@@ -42,25 +41,21 @@ world.on("beginContact",function(e)
 
 	if (bodyA.shapes[0].collisionGroup !== bodyB.shapes[0].collisionGroup)
 	{
-		//If enemy
 		if (orStatementHelper(bodyA, bodyB, constants.ENEMY))
 		{
 			bodiesArray = bodyAssignment(bodyA, bodyB, constants.ENEMY);
 			primaryBody = bodiesArray[0];
 			otherBody   = bodiesArray[1];
 			
-			//Check if otherBody is a valid target (in list of valid targets)
 			if (Enemy.opposeBodies.has(otherBody.shapes[0].collisionGroup))
 			{
 				try
-				{
-					/*
-					if (otherBody.shapes[0].collisionGroup === constants.PLAYER)
-					{
-						Player.list[playerBody.id].inContactWithEnemy = true; 
-					}
-					*/// Just in case we still need this
-					Enemy.wave[primaryBody.id].initAttack(otherBody.id);
+				{	
+					let enemyId  = primaryBody.id.match(/^(.+?)\$/)[1],
+						roomId   = primaryBody.id.match(/\$(.*?)$/)[1],
+						playerId = otherBody.id.match(/^(.+?)\$/)[1];
+
+					Room.list[roomId].enemies.list[enemyId].initAttack(Room.list[roomId].players.list[playerId]);
 				}
 				catch(error)
 				{
@@ -68,18 +63,13 @@ world.on("beginContact",function(e)
 				}
 			}
 		}
-		//If player
-		else if (orStatementHelper(bodyA, bodyB, constants.PLAYER))
-		{
-			bodiesArray = bodyAssignment(bodyA, bodyB, constants.PLAYER);
-			primaryBody = bodiesArray[0];
-			otherBody   = bodiesArray[1];
-		}
-		//If block
-		else if (orStatementHelper(bodyA, bodyB, constants.BLOCK))
-		{
-			bodiesArray = bodyAssignment(bodyA, bodyB, constants.BLOCK);
-		}
+
+		// else if (orStatementHelper(bodyA, bodyB, constants.PLAYER))
+		// {
+		// 	bodiesArray = bodyAssignment(bodyA, bodyB, constants.PLAYER);
+		// 	primaryBody = bodiesArray[0];
+		// 	otherBody   = bodiesArray[1];
+		// }
 	}
 });
 
@@ -87,7 +77,7 @@ world.on("endContact",function(e)
 {
 	let bodyA = e.bodyA,
 		bodyB = e.bodyB;
-	//If player
+
 	if(bodyA.shapes[0].collisionGroup === constants.PLAYER || bodyB.shapes[0].collisionGroup === constants.PLAYER)
 	{
 		let playerBody, otherBody;
@@ -101,17 +91,20 @@ world.on("endContact",function(e)
 			playerBody = bodyB;
 			otherBody = bodyA;
 		}
+		let roomId   = otherBody.id.match(/\$(.*?)$/)[1],
+			playerId = playerBody.id.match(/^(.+?)\$/)[1];
 
-		//If player hit enemy
 		if (otherBody.shapes[0].collisionGroup === constants.ENEMY)
 		{
 			try
 			{
-				Player.list[playerBody.id].inContactWithEnemy = false;
+				// console.log("\n\n\n\n\n\n\n\n\n room id: \n", roomId, "\n\n\n\n\n\n\n\n\n players list: \n", Room.list[roomId].players, "\n\n\n\n\n\n\n\n\n player id: ", playerId, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n**********************************\n\n\n\n\n\n\n\n\n\n\n\n\n");
+				// inContactWithEnemy
+				Room.list[roomId].players.list[playerId].inContactWithEnemy = false;
 			}
 			catch(error)
 			{
-				console.log("Player left while being attacked");
+				console.log("Player left while being attacked",error);
 			}
 		}
 	}
@@ -140,39 +133,44 @@ let CollisionHandler =
 	},
 	updateBonuses()
 	{
-		for(let i in Bonus.list)
-		{
-			let item     = Bonus.list[i],
-				itempos  = item.position,
-				itemsize = [constants.BONUSSIZE, constants.BONUSSIZE];
-
-			for(let j in Player.list)
+		for(let roomId in Room.list)
+			for (let bonusId in Room.list[roomId].bonuses.list)
 			{
-				let player     = Player.list[j],
-					playerpos  = player.body.position,
-					playersize = [constants.PLAYERSIZE, constants.PLAYERSIZE];
+				let item     = Room.list[roomId].bonuses.list[bonusId],
+					itempos  = item.position,
+					itemsize = [constants.BONUSSIZE, constants.BONUSSIZE];
 
-				if(CollisionHandler.checkOverlap(playerpos, itempos, playersize, itemsize))
+				for(let j in Room.list[roomId].players.list)
 				{
-					try
+					let player     = Room.list[roomId].players.list[j],
+						playerpos  = player.body.position,
+						playersize = [constants.PLAYERSIZE, constants.PLAYERSIZE];
+
+					if(CollisionHandler.checkOverlap(playerpos, itempos, playersize, itemsize))
 					{
-						if(item.type === 'rifleammo')
-							player.inventory.rifle.ammo   += item.quantity;
-						else if (item.type === 'shotgunammo')
-							player.inventory.shotgun.ammo += item.quantity;
-						else if (item.type === 'sniperammo')
-							player.inventory.sniper.ammo  += item.quantity;
-						else if (item.type === 'cure')
-							player.hp += 20;
-						item.destroy();
-					}
-					catch(error)
-					{
-						console.log(error);
+						try
+						{
+							if(item.type === 'rifleammo')
+								player.inventory.rifle.ammo += item.quantity;
+							else if (item.type === 'shotgunammo')
+								player.inventory.shotgun.ammo += item.quantity;
+							else if (item.type === 'sniperammo')
+								player.inventory.sniper.ammo += item.quantity;
+							else if (item.type === 'cure')
+							{
+								player.hp += 20;
+								if (player.hp > 100)
+									player.hp = 100;
+							}
+							item.destroy();
+						}
+						catch(error)
+						{
+							console.log(error);
+						}
 					}
 				}
 			}
-		}
 	}
 };
 module.exports = CollisionHandler;

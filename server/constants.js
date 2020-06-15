@@ -1,4 +1,3 @@
-// для игрока
 exports.INVENTORYDATA = {
 	rifle:
 	{
@@ -11,20 +10,23 @@ exports.INVENTORYDATA = {
 	{
 		name: "shotgun",
 		ammo: 20,
-		cooldown: 20,
+		cooldown: 30,
 		initial: true,
 	},
 	sniper:
 	{
 		name: "sniper",
 		ammo: 10,
-		cooldown: 40,
+		cooldown: 50,
 		initial: true,
 	}
+	
 };
 exports.PLAYERSIZE  = 64;
 exports.RIFLEDAMAGE = 30;
-exports.RESPAWNTIME = 600;
+exports.SHOTGUNDAMAGE = 15;
+exports.SNIPERDAMAGE = 60;
+exports.RESPAWNTIME = 360;
 
 // коллизии
 exports.PLAYER     = Math.pow(2,0);
@@ -32,13 +34,10 @@ exports.ENEMY      = Math.pow(2,1);
 exports.BULLET     = Math.pow(2,2);
 exports.BLOCK      = Math.pow(2,3);
 exports.BONUS      = Math.pow(2,4);
-
 // карта
-exports.WORLDHEIGHT = 1280;
+exports.WORLDHEIGHT = 2048;
 exports.WORLDWIDTH = 2048;
 
-
-// для противников
 exports.ENEMIESSPAWNPOINTS =
 [
 	{
@@ -62,30 +61,45 @@ exports.ENEMIESSPAWNPOINTS =
 ];
 
 exports.ENEMYTYPE =
-[
+{
+	common:
 	{
-		title: 'common',
 		hp: 100,
-		maxSpeed: 75,
-		dps: 0
+		maxSpeed: 120,
+		// damage: 100,
+		damage: 10,
 	},
+	medium:
 	{
-		title: 'medium',
-		hp: 250,
-		maxSpeed: 75,
-		dps: 0
-	},
-	{
-		title: 'hard',
 		hp: 400,
-		maxSpeed: 75,
-		dps: 0
-	}
-];
+		maxSpeed: 190,
+		damage: 50,
+	},
+};
 
 // мир
-exports.ENEMYHITDELAY = 2;
+exports.ENEMYHITDELAY = 1;
 exports.ENEMYHITRADIUS = 70;
-exports.ENEMYDAMAGE = 20;
 exports.BONUSSIZE = 4;
 exports.MAXBONUSCOUNT = 5;
+
+exports.GAME =
+{
+	easy:
+	{
+		waves:[{common:8,medium:0},{common:12,medium:0},{common:16,medium:0},{common:26,medium:0},]
+		// waves:[{common:1,medium:0}]
+	},
+	medium:
+	{
+		waves:[{common:16,medium:0},{common:20,medium:0},{common:26,medium:0},{common:32,medium:1},{common:36,medium:2}]
+	},
+	difficult:
+	{
+		waves:[{common:20,medium:0},{common:26,medium:0},{common:32,medium:1},{common:38,medium:2},{common:44,medium:3},{common:50,medium:4}]
+	},
+	nightmare:
+	{
+		waves:[{common:32,medium:2},{common:40,medium:4},{common:46,medium:8},{common:50,medium:8},{common:58,medium:8},{common:64,medium:8},{common:70,medium:16}]
+	},
+};
