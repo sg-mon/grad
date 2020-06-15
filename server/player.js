@@ -135,14 +135,14 @@ class Player
 
 	checkWorldBounds()
 	{
-		if (this.body.position[0] <= 32)
+		if (this.body.position[0] < 32)
 			this.body.position[0] = 32;
-		if (this.body.position[0] >= constants.WORLDWIDTH - 32)
+		if (this.body.position[0] > constants.WORLDWIDTH - 32)
 			this.body.position[0] = constants.WORLDWIDTH - 32;
 
-		if (this.body.position[1] <= 32)
+		if (this.body.position[1] < 32)
 			this.body.position[1] = 32;
-		if (this.body.position[1] >= constants.WORLDHEIGHT - 32)
+		if (this.body.position[1] > constants.WORLDHEIGHT - 32)
 			this.body.position[1] = constants.WORLDHEIGHT - 32;
 	}
 

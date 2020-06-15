@@ -115,13 +115,13 @@ class Enemy
 	}
 	checkWorldBounds()
 	{
-		if (this.body.position[0] <= 64)
+		if (this.body.position[0] < 64)
 			this.body.position[0] = 64;
-		if (this.body.position[0] >= constants.WORLDWIDTH - 64)
+		if (this.body.position[0] > constants.WORLDWIDTH - 64)
 			this.body.position[0] = constants.WORLDWIDTH - 64;
-		if (this.body.position[1] <= 64)
+		if (this.body.position[1] < 64)
 			this.body.position[1] = 64;
-		if (this.body.position[1] >= constants.WORLDHEIGHT - 64)
+		if (this.body.position[1] > constants.WORLDHEIGHT - 64)
 			this.body.position[1] = constants.WORLDHEIGHT - 64;
 	}
 	updateVelocity()
