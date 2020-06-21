@@ -27,17 +27,12 @@ class Player
 
 
 		for (let inv in constants.INVENTORYDATA)
-		{
-			if (!constants.INVENTORYDATA[inv].initial)
-				continue;
-
 			this.inventory[inv] =
 			{
 				ammo: constants.INVENTORYDATA[inv].ammo,
 				cooldown: constants.INVENTORYDATA[inv].cooldown,
 				name: constants.INVENTORYDATA[inv].name,
 			};
-		}
 
 		this.activeWeapon  = Object.keys(this.inventory)[0];
 		this.inputs =
@@ -60,6 +55,7 @@ class Player
 		this.body.addShape(bodyShape);
 		world.addBody(this.body);
 	}
+	// смена инвентаря
 	changeInventory(invInd)
 	{
 		if(invInd < 0
@@ -70,7 +66,7 @@ class Player
 		this.activeWeapon = Object.values(this.inventory)[invInd].name;
 		this.socket.emit('successChangeInventory', {weapon: this.activeWeapon, oldWeapon: oldWeapon, slot: invInd});
 	}
-
+	// выстрел
 	useRequest()
 	{
 		if(this.dead)
@@ -86,6 +82,7 @@ class Player
 				this.kills++;
 		}
 	}
+	// 
 	updateRespawnTimer()
 	{
 		this.respawnTimer--;
@@ -93,29 +90,15 @@ class Player
 		if(this.respawnTimer <= 0)
 			this.respawn();
 	}
-
+	// перерождение
 	respawn()
 	{
 		this.hp            = 100;
 		this.dead          = false;
 		this.respawnTimer  = 0;
-
-		// for (let inv in constants.INVENTORYDATA)
-		// {
-		// 	if (!constants.INVENTORYDATA[inv].initial)
-		// 		continue;
-
-		// 	this.inventory[inv] =
-		// 	{
-		// 		ammo: constants.INVENTORYDATA[inv].ammo,
-		// 		cooldown: constants.INVENTORYDATA[inv].cooldown,
-		// 		name: constants.INVENTORYDATA[inv].name,
-		// 	};
-		// }
-
 		this.body.position = [200, 200];
 	}
-
+	// обновление скорости
 	updateSpeed()
 	{
 		if(this.inputs.right)
@@ -132,7 +115,7 @@ class Player
 		else
 			this.body.velocity[1] = 0;
 	}
-
+	// проверка на нарушение границ карты
 	checkWorldBounds()
 	{
 		if (this.body.position[0] < 32)
@@ -145,7 +128,7 @@ class Player
 		if (this.body.position[1] > constants.WORLDHEIGHT - 32)
 			this.body.position[1] = constants.WORLDHEIGHT - 32;
 	}
-
+	// обновляется нанесенный и полученный урон
 	updateDamage()
 	{
 		if(this.justDamaged)
@@ -161,7 +144,7 @@ class Player
 			this.damageCooldownCounter = 0;
 		}
 	}
-
+	// смерть игрока
 	die()
 	{
 		this.deaths++;
@@ -176,7 +159,7 @@ class Player
 
 		socketio.of(this.namespace).to(this.room).emit('playerDeath', this.id);
 	}
-
+	// уменьшение здоровья
 	decreaseHealth(dmg)
 	{
 		if(this.justDamaged)
@@ -191,14 +174,14 @@ class Player
 			this.die();
 		}
 	}
-
+	// обновление задержки перед выстрелом
 	updateCooldowns()
 	{
 		for (let inv in this.inventory)
 			if (this.inventory[inv].cooldown)
 				this.inventory[inv].cooldown--;
 	}
-
+	// обновление игрока
 	update()
 	{
 		if(this.dead)
@@ -212,7 +195,7 @@ class Player
 		this.updateDamage();
 		this.updateCooldowns();
 	}
-
+	// удаление игрока при выходе
 	destroy()
 	{
 		world.removeBody(this.body);

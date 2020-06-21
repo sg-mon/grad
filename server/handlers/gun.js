@@ -10,15 +10,20 @@ setTimeout(()=>
 },1);
 let GunHandler =
 {
+	// выстрел из rifle
 	rifleShoot(room, angle, position, id)
 	{
+		// дальность
 		let distance = 800,
+			// точка выстрела
 			startx = position[0] + 50*Math.cos(angle/180*Math.PI),
 			starty = position[1] + 50*Math.sin(angle/180*Math.PI),
+			// жив ли противник
 			killedEnemy = false;
 
+		// для проверки коллизии
 		let ray = new p2.Ray({
-			mode: p2.Ray.CLOSEST, // or ANY
+			mode: p2.Ray.CLOSEST,
 			from: [startx, starty],
 			to: [position[0]+distance*Math.cos(angle/180*Math.PI), position[1]+distance*Math.sin(angle/180*Math.PI)],
 		});
@@ -50,14 +55,13 @@ let GunHandler =
 			killedEnemy = false;
 			let newAngle = angle + offset;
 			let ray = new p2.Ray({
-				mode: p2.Ray.CLOSEST, // or ANY
+				mode: p2.Ray.CLOSEST,
 				from: [startx, starty],
 				to: [position[0]+distance*Math.cos(newAngle/180*Math.PI), position[1]+distance*Math.sin(newAngle/180*Math.PI)],
 			});
 			let result = new p2.RaycastResult();
 			world.raycast(result, ray);
 
-			// Get the hit point
 			let hitPoint = p2.vec2.create();
 			result.getHitPoint(hitPoint, ray);
 
@@ -83,7 +87,7 @@ let GunHandler =
 			killedEnemy = false;
 
 		let ray = new p2.Ray({
-			mode: p2.Ray.CLOSEST, // or ANY
+			mode: p2.Ray.CLOSEST,
 			from: [startx, starty],
 			to: [position[0]+distance*Math.cos(angle/180*Math.PI), position[1]+distance*Math.sin(angle/180*Math.PI)],
 		});

@@ -2,14 +2,6 @@ class Enemy
 {
 	static wave  = {};
 	static group = null;
-	static destroyAll()
-	{
-		for (let id in Enemy.wave)
-		{
-			Enemy.wave[id].gameObj.kill();
-			delete Enemy.wave[id];
-		}
-	}
 	static createEnemy(data)
 	{
 		if(!(data.id in Enemy.wave))
@@ -33,7 +25,7 @@ class Enemy
 	{
 		for(let id in data)
 			if(!(id in Enemy.wave))
-				new Enemy(id, data[id].position);
+				new Enemy(id, data[id].position, data[id].type);
 	}
 	constructor(id, pos, type)
 	{

@@ -13,7 +13,6 @@ class Enemy
 		this.id                 = 'enemy-' + rMath.rand(100000, 999999);
 		this.room               = room;
 		this.maxSpeed           = constants.ENEMYTYPE[type].maxSpeed;
-		// this.maxSpeed           = rMath.rand(constants.ENEMYTYPE[type].maxSpeed-15, constants.ENEMYTYPE[type].maxSpeed);
 		this.hp                 = constants.ENEMYTYPE[type].hp;
 		this.damage             = constants.ENEMYTYPE[type].damage;
 		this.type               = type;
@@ -42,11 +41,13 @@ class Enemy
 		this.body.addShape(enemyshape);
 		world.addBody(this.body);
 	}
+	// начало атаки
 	initAttack(target)
 	{
 		this.initiateAttack = true;
 		this.target = target;
 	}
+	// получение урона
 	decreaseHp(dmg, player)
 	{
 		if (dmg > this.lastTargetDmg)
@@ -61,16 +62,17 @@ class Enemy
 			world.removeBody(this.body);
 			return true;
 		}
-		// this.body.velocity = [this.body.velocity[0]*-1, this.body.velocity[1]*-1];
+
 		return false;
 	}
+	// остановка
 	stopVelocity()
 	{
 		this.body.velocity[0] = this.body.velocity[1] = 0;
 	}
 	update(playerList)
 	{
-		if (!this.target || this.target.dead)
+		if (!this.target || !(this.target.id in playerList) || this.target.dead)
 			this.updateTarget(playerList);
 
 		this.updateVelocity();
@@ -78,6 +80,7 @@ class Enemy
 		this.updateAngle();
 		this.updateAttack();
 	}
+	// обновить атаку
 	updateAttack()
 	{
 		if (!this.initiateAttack)
@@ -96,6 +99,7 @@ class Enemy
 			this.attackDelayCounter = 0;
 		}
 	}
+	// обновление цели
 	updateTarget(playerList)
 	{
 		if (!playerList || !Object.keys(playerList).length)
@@ -111,8 +115,8 @@ class Enemy
 				|| rMath.distanceTo(playerList[playerId].body.position, playerList[playerId].body.position) < this.target.distance)
 				&& !playerList[playerId].dead)
 				this.target = playerList[playerId];
-
 	}
+	// проверка на нарушение границ
 	checkWorldBounds()
 	{
 		if (this.body.position[0] < 64)
@@ -124,6 +128,7 @@ class Enemy
 		if (this.body.position[1] > constants.WORLDHEIGHT - 64)
 			this.body.position[1] = constants.WORLDHEIGHT - 64;
 	}
+	// обновление скорости
 	updateVelocity()
 	{
 		let trX = 0,
@@ -168,6 +173,7 @@ class Enemy
 		else
 			this.body.velocity[1] = 0;
 	}
+	// поворот вслед за игроком
 	updateAngle()
 	{
 		let x = 0,

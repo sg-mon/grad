@@ -10,6 +10,7 @@ let rin =
 	$socket: null,
 	name: '',
 	layer: null,
+	// задать имя
 	setSocketName(e)
 	{
 		e.preventDefault();
@@ -22,11 +23,13 @@ let rin =
 		this.showName();
 		this.popups.close('.name-popup');
 	},
+	// показать имя
 	showName()
 	{
 		$('#playerName').show();
 		$('#playerName').html(`Вы подключились как <b>${this.name}</b>`);
 	},
+	// иницивлизация сокета, проверка куков на наличие имени
 	init()
 	{
 		this.$socket = io();
@@ -37,73 +40,35 @@ let rin =
 			this.connect('pve');
 		}
 	},
+	// переход к комнатам
 	closeGame()
 	{
 		window.location.reload();
 		return;
-
-		// $('._no-game').each(function(ind)
-		// {
-		// 	$(this).removeClass('hide');
-		// });
-		// $('.game-wr').addClass('hide');
-		// rin.popups.close('.statistic-popup');
-		
-		// rin.game.ins.time.events.remove(rin.game.timer);
-		// rin.game.timer = 
-		// rin.game.ins           = null
-		// rin.game.map           = null;
-		// rin.game.layer         = null;
-		// rin.game.currentPlayer = null;
-		// Bonus.destroyAll();
-		// Enemy.destroyAll();
-		// Player.destroyAll();
-		// this.inputHandler.stop();
-		// $('#game').html('');
 	},
-	getEnding(num, type)
-	{
-		if (type === 'kills')
-			switch (num % 10)
-			{
-				case 1:
-					return num + ' убийство';
-				break;
-				case 2:
-				case 3:
-				case 4:
-					return num + ' убийства';
-				break;
-				default:
-					return num + ' убийств';
-				break;
-			}
-		else if (type === 'deaths')
-			switch (num % 10)
-			{
-				case 1:
-					return num + ' смерть';
-				break;
-				case 2:
-				case 3:
-				case 4:
-					return num + ' смерти';
-				break;
-				default:
-					return num + ' смертей';
-				break;
-			}
-	},
+	// приходит массив со статистикой игроков, добавляем строки в statistic-popup
 	endGame(data)
 	{
-		$('.statistic-popup').find('#kills-name').html(data.kills[0]);
-		$('.statistic-popup').find('#deaths-name').html(data.deaths[0]);
+		for (let row of data)
+		{
+			let tr = document.createElement('tr'),
+				td;
+			td = document.createElement('td')
+			td.innerText = row.name;
+			tr.appendChild(td);
+			td = document.createElement('td')
+			td.innerText = row.kills;
+			tr.appendChild(td);
+			td = document.createElement('td')
+			td.innerText = row.deaths;
+			tr.appendChild(td);
 
-		$('.statistic-popup').find('#kills').html(rin.getEnding(data.kills[1], 'kills'));
-		$('.statistic-popup').find('#deaths').html(rin.getEnding(data.deaths[1], 'deaths'));
+			document.querySelector('#statistic-popup-table').appendChild(tr);
+		}
 
 		rin.popups.open('.statistic-popup');
 	},
+	// инициализация игры
 	async initGame()
 	{
 		await this.preload.start();
@@ -118,19 +83,21 @@ let rin =
 		winManager.init();
 		return Promise.resolve();
 	},
+	// подключение к namespace
 	connect(ns)
 	{
 		this.$socket = io('/' + ns);
-		// rooms
 		this.$socket.on('roomsList', rin.rooms.show);
 		this.$socket.on('newRoom', rin.rooms.showNewRoom);
 		this.$socket.on('updateRoom', rin.rooms.update);
 		this.$socket.on('removeRoom', rin.rooms.removeRoom);
 		rin.socket.init();
 	},
+	// объект для работы с комнатами
 	rooms:
 	{
 		all: {},
+		// отображает весь список комнат
 		show(list)
 		{
 			$('.rooms').removeClass('hide');
@@ -144,11 +111,13 @@ let rin =
 			for (let id in list)
 				rin.rooms.showNewRoom(list[id]);
 		},
+		// обновляет весь список комнат
 		update(list)
 		{
 			for (let id in list)
 				rin.rooms.updateRoom(list[id]);
 		},
+		// отображает конкретную комнату
 		showNewRoom(roomData)
 		{
 			if (!$('.room-items-empty').hasClass('hide'))
@@ -172,6 +141,7 @@ let rin =
 			$('._room-items-all').append(roomItem);
 			rin.rooms.all[roomData.id] = roomData;
 		},
+		// обновляет конкретную комнату
 		updateRoom(roomData)
 		{
 			let room = $(`.room-item[data-id=${roomData.id}]`);
@@ -186,6 +156,7 @@ let rin =
 
 			rin.rooms.all[roomData.id] = roomData;
 		},
+		// удаление комнаты по id
 		removeRoom(id)
 		{
 			delete rin.rooms.all[id];
@@ -194,6 +165,7 @@ let rin =
 			if (!Object.keys(rin.rooms.all))
 				$('.room-items-empty').removeClass('hide');
 		},
+		// присоединение игрока к комнате
 		async join(e)
 		{
 			rin.rooms.currentId = $(e.target).closest('.room-item').data('id');
@@ -201,6 +173,7 @@ let rin =
 
 			await rin.initGame();
 		},
+		// валидация с формы создания комнат и отравка события с данными
 		createReq(e)
 		{
 			e.preventDefault();
@@ -221,6 +194,7 @@ let rin =
 			rin.$socket.emit('createRoom', data);
 			rin.popups.close('.room-create');
 		},
+		// перевод для настроек комнаты
 		getTranslate(word)
 		{
 			switch(word)
@@ -255,6 +229,7 @@ let rin =
 			}
 		}
 	},
+	// прелоадер всего окна
 	preload:
 	{
 		start()
@@ -271,6 +246,7 @@ let rin =
 			window.loading_screen.finish();
 		}
 	},
+	// объект для отслеживания нажатий игрока
 	inputHandler:
 	{
 		inputs:
@@ -301,8 +277,7 @@ let rin =
 				else if(e.keyCode === 87) //w
 					this.inputs.up = true;
 				else if (e.keyCode >= 49 && e.keyCode <= 57) //1-9
-					rin.game.changeInventory(e.keyCode - 48); //Adjusting to 1-5
-					// rin.socket.ins.on('changeInventory', e.keyCode - 48);
+					rin.game.changeInventory(e.keyCode - 48); //1-5
 
 				rin.socket.updateServer();
 			};
@@ -338,6 +313,7 @@ let rin =
 			}
 		}
 	},
+	// главный объект игры, работа с Phaser
 	game:
 	{
 		ins:   null,
@@ -347,6 +323,7 @@ let rin =
 		start: false,
 		location: 'default',
 		currentPlayer: null,
+		// создается объект игры
 		init()
 		{
 			this.ins = new Phaser.Game("100%", "100%", Phaser.AUTO, 'game',
@@ -369,19 +346,20 @@ let rin =
 			this.load.image('shotgunammo', '/assets/shotgunammo.png');
 			this.load.image('sniperammo', '/assets/sniperammo.png');
 			this.load.image('cure', '/assets/cure.png');
-			// TILESET
+			// карта
 			this.load.tilemap('map', `/assets/map/map-${rin.game.location}.csv`);
 			this.load.image('tiles', '/assets/map/map-tileset.png');
-			// user interface
+			// ui
 			winManager.slickUI = rin.game.ins.plugins.add(Phaser.Plugin.SlickUI);
 			winManager.slickUI.load('/assets/UI/kenney.json');
 		},
+		// создание игры
 		create()
 		{
 			this.game.world.setBounds(200, 20, 1440, 900);
 			this.game.map = this.add.tilemap('map', 64, 64);
 			this.game.map.addTilesetImage('tiles');
-			// bg layer
+
 			rin.layer = this.game.map.createLayer(0);
 			rin.layer.resizeWorld();
 			rin.layer.position.set(1, 1);
@@ -413,6 +391,7 @@ let rin =
 		{
 			this.currentPlayer = new Player(id, true);
 		},
+		// обновление поворота текущего игрока
 		currentPlayerUpdate(data)
 		{
 			let x = this.ins.camera.x + this.ins.input.mousePointer.x;
@@ -450,13 +429,12 @@ let rin =
 			rin.inputHandler.updateMouseDown();
 			LineDrawer.updateAll();
 			winManager.update();
-			// Player.updateAllPositions();
-			// Enemy.updateAllPositions();
 		},
 	},
 	socket:
 	{
 		ins: null,
+		// вешает обработчики на все события
 		init()
 		{
 			rin.$socket.on('connectToRoom', ()=>
@@ -482,6 +460,7 @@ let rin =
 				rin.inputHandler.init();	
 			});
 		},
+		// обновить данные ввода на сервере
 		updateServer()
 		{
 			rin.$socket.emit('updateServer', {inputs: rin.inputHandler.inputs, angle: rin.game.currentPlayer.gameObj.angle});
@@ -489,6 +468,7 @@ let rin =
 	},
 	GunHandler:
 	{
+		// отрисовывает выстрел
 		createGunShot(data)
 		{
 			let endx = data.startx + data.length*Math.cos(data.angle/180*Math.PI),
@@ -498,6 +478,7 @@ let rin =
 			graphics.moveTo(data.startx, data.starty);
 			graphics.lineTo(endx, endy);
 		},
+		// запрос на создание выстрела
 		useRequest()
 		{
 			let x = rin.game.ins.input.mousePointer.x + rin.game.ins.camera.x,
@@ -505,6 +486,7 @@ let rin =
 			rin.$socket.emit('useRequest', [x,y]);
 		}
 	},
+	// объект для работы с попапами
 	popups:
 	{
 		open: function(popup)
@@ -532,6 +514,7 @@ let rin =
 				$(document).off('click');
 		}
 	},
+	// обект для работы с куками
 	cookie:
 	{
 		set(name, value, options = {})

@@ -19,7 +19,6 @@
   "homepage": "https://github.com/sg-mon/grad#readme",
   "dependencies": {
     "browser-sync": "^2.26.7",
-    "cloud-env": "^0.2.2",
     "express": "^4.16.2",
     "gulp": "^4.0.2",
     "gulp-cache": "^1.1.3",

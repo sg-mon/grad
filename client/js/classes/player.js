@@ -2,31 +2,26 @@ class Player
 {
 	static list    = {};
 	static group   = null;
-	static destroyAll()
-	{
-		for (let id in Player.list)
-		{
-			Player.list[id].gameObj.kill();
-			delete Player.list[id];
-		}
-	}
+	// добавить нового игрока
 	static addNewPlayer(id)
 	{
 		if (!(id in Player.list))
 			new Player(id);
 	}
+	// удалить игрока
 	static removePlayer(id)
 	{
 		Player.list[id].gameObj.kill();
 		delete Player.list[id];
 	}
+	// отобразить всех игроков при подключении
 	static onInitialJoinPopulatePlayers(data)
 	{
 		for (let id in data)
 			if (!(id in Player.list))
 				new Player(id);
 	}
-
+	// обновление всех игроков
 	static updateAll(data)
 	{
 		for (let id in data)
@@ -64,6 +59,7 @@ class Player
 
 		this.constructor.list[id] = this;
 	}
+	// функция обновления: приходят данные о позициях, количестве здоровья и проч.
 	update(data)
 	{
 		this.gameObj.x = data.position[0];

@@ -4,13 +4,11 @@ let http = require('http').Server(app);
 let io = require('socket.io')(http,{});
 let path = require('path');
 
-let SOCKET_LIST = {};
-
-let lastConnectedSocket = null;
 app.get('/', function (req, res)
 {
 	res.sendFile(path.join(__dirname, '../client', 'index.html'));
 });
+// дает доступ к js, css и картинкам, хранящимся в папках
 app.use('/client', express.static(path.join(__dirname, '../client')));
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
 

@@ -63,13 +63,6 @@ world.on("beginContact",function(e)
 				}
 			}
 		}
-
-		// else if (orStatementHelper(bodyA, bodyB, constants.PLAYER))
-		// {
-		// 	bodiesArray = bodyAssignment(bodyA, bodyB, constants.PLAYER);
-		// 	primaryBody = bodiesArray[0];
-		// 	otherBody   = bodiesArray[1];
-		// }
 	}
 });
 
@@ -98,12 +91,11 @@ world.on("endContact",function(e)
 		{
 			try
 			{
-				// console.log("\n\n\n\n\n\n\n\n\n room id: \n", roomId, "\n\n\n\n\n\n\n\n\n players list: \n", Room.list[roomId].players, "\n\n\n\n\n\n\n\n\n player id: ", playerId, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n**********************************\n\n\n\n\n\n\n\n\n\n\n\n\n");
-				// inContactWithEnemy
 				Room.list[roomId].players.list[playerId].inContactWithEnemy = false;
 			}
 			catch(error)
 			{
+				// console.log("\n\n\n\n\n\n\n\n\n", Room.list, roomId, playerId, "\n\n\n\n\n\n\n\n\n");
 				console.log("Player left while being attacked",error);
 			}
 		}

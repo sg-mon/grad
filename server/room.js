@@ -1,4 +1,3 @@
-
 let socketio   = require('./socket.js').io;
 let Enemy      = require('./enemy.js');
 let world      = require('./handlers/world.js');
@@ -9,10 +8,14 @@ let bonusTemplate =
 {
 	list: {},
 };
+let Player     = require('./player.js');
+let PlayerList = Player.list;
 
 class Room
 {
+	// все комнаты
 	static list = {};
+	// получить список всех
 	static getRoomsList()
 	{
 		let rooms = {};
@@ -30,6 +33,7 @@ class Room
 		}
 		return rooms;
 	}
+	// получить данные о конкретной комнате
 	static getRoom(id)
 	{
 		return {
@@ -54,9 +58,12 @@ class Room
 		this.leaderId       = socketId;
 		this.name           = name;
 		this.stopGame       = false;
+		// методы для работы со всеми игроками комнаты
 		this.players        =
 		{
+			// список всех игроков комнаты
 			list: {},
+			// обновление списка
 			update(roomId)
 			{
 				for (let id in this.list)
@@ -64,6 +71,7 @@ class Room
 
 				socketio.of('/pve').to(roomId).emit('updateClientOnPlayers', this.generateCurrentStatusPackage());
 			},
+			// обработка отключения сокета
 			onDisconnect(roomId, id)
 			{
 				if (id in this.list)
@@ -74,6 +82,7 @@ class Room
 					socketio.of('/pve').to(roomId).emit('disconnectPlayer', id);
 				}
 			},
+			// генерирует данные для клиентской части
 			generateCurrentStatusPackage()
 			{
 				let pack = {}
@@ -94,6 +103,7 @@ class Room
 				return pack;
 			}
 		};
+		// методы для работы со всеми противниками в комнате
 		this.enemies =
 		{
 			list: {},
@@ -118,6 +128,7 @@ class Room
 				}
 				socketio.of('/pve').to(roomId).emit('updateClientOnEnemies', this.generateCurrentStatusPackage());
 			},
+			// генерирует данные для клиентской части
 			generateCurrentStatusPackage()
 			{
 				let pack = {};
@@ -125,11 +136,13 @@ class Room
 					pack[i] =
 					{
 						position: this.list[i].body.position,
-						angle:    this.list[i].angle
+						angle:    this.list[i].angle,
+						type:     this.list[i].type
 					};
 
 				return pack;
 			},
+			// создание волны нападения противников, данные о волнах хранятся в constans.js
 			createWave(diff, roomId)
 			{
 				if (!constants.GAME[diff].waves[this.waveNumber])
@@ -155,6 +168,7 @@ class Room
 				this.waveNumber++;
 			}
 		};
+		// методы для работы со всеми бонусами в комнате
 		this.bonuses = 
 		{
 			list: {},
@@ -170,6 +184,7 @@ class Room
 
 				this.randomSpawn(roomId);
 			},
+			// генерирует данные для клиентской части 
 			generateCurrentStatusPackage()
 			{
 				let pack = {};
@@ -183,6 +198,7 @@ class Room
 
 				return pack;
 			},
+			// появление случайного 
 			randomSpawn(roomId)
 			{
 				if(Object.keys(this.list).length >= constants.MAXBONUSCOUNT)
@@ -216,6 +232,7 @@ class Room
 		};
 		this.constructor.list[this.id] = this;
 	}
+	// добавление нового игрока
 	addPlayer(socket, name)
 	{
 		if (!this.players.list)
@@ -251,30 +268,17 @@ class Room
 
 
 		this.players.list[player.id] = player;
+		this.enemies.update(this.players.list, this.diff, this.roomId);
 	}
+	// конец игры
 	endGame()
 	{
 		this.stopGame = true;
-		let data =
-		{
-			kills: ['', 0],
-			deaths: ['', 0]
-		};
+		let data = [];
 
 		for (let id in this.players.list)
-		{
-			if (this.players.list[id].deaths > data.deaths[1] || !data.deaths[0])
-			{
-				data.deaths[0] = this.players.list[id].name;
-				data.deaths[1] = this.players.list[id].deaths;
-			}
+			data.push({name: this.players.list[id].name, kills: this.players.list[id].kills, deaths: this.players.list[id].deaths});
 
-			if (this.players.list[id].kills > data.kills[1] || !data.kills[0])
-			{
-				data.kills[0] = this.players.list[id].name;
-				data.kills[1] = this.players.list[id].kills;
-			}
-		}
 		socketio.of('/pve').to(this.id).emit('endGame', data);
 
 		for (let socketId in socketio.of('/pve').to(this.id).sockets)
@@ -304,6 +308,4 @@ class Room
 	}
 }
 
-let Player     = require('./player.js');
-let PlayerList = Player.list;
 module.exports = Room;
